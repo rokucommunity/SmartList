@@ -51,15 +51,27 @@ Declare the component in your xml like this. Be sure to give it an ID so we can 
 Now we need to populate the list with some data:
 
 `HomePage.brs`
-```brightscript
+```vb
 sub init()
     m.homeList = m.top.findNode("homeList")
-    content = createObject("roSGNode", "ContentNode")
     
-    row1 = content.createChild("ContentNode")
-    'TODO George, please write more here...
+    rowCount = 10
+    cellCount = 10
 
-    'pass the content to the list. It'll render and you're good to go!
+    content = createObject("roSGNode", "ContentNode")
+    for r = 0 to rowCount
+        rowContent = listContent.createChild("ContentNode")
+        for c = 0 to cellCount
+        cellContent = rowContent.createChild("ContentNode")
+        cellContent.update({
+            color: "0xFFFFFF"
+            'make each cell slightly larger, to show how awesome this list is
+            width: 10  * r
+            height: 10 * c
+        })
+        end for
+    end for
+    'assign the content of the list, this will render the list
     m.homeList.content = content
 end sub
 ```
