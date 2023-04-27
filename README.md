@@ -64,10 +64,7 @@ sub init()
         for c = 0 to cellCount
         cellContent = rowContent.createChild("ContentNode")
         cellContent.update({
-            color: "0xFFFFFF"
-            'make each cell slightly larger, to show how awesome this list is
-            width: 10  * r
-            height: 10 * c
+            title: "Row " + r.ToStr() + " Cell " + c.ToStr()
         })
         end for
     end for
