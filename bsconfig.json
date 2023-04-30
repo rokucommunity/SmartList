@@ -1,0 +1,69 @@
+{
+  "rootDir": "src",
+  "files": [
+    "manifest",
+    "source/**/*.*",
+    "meta/**/*.*",
+    "meta/*.*",
+    "images/**/*.*",
+    "images/*.*",
+    // "!source/**/*.spec.*",
+    "components/**/*.*",
+    {
+      "src": "../src-sample/**/*.*",
+      "dest": ""
+    }
+  ],
+  "autoImportComponentScript": true,
+  "createPackage": false,
+  "stagingDir": "build",
+  "diagnosticFilters": [
+    {
+      "src": "**/roku_modules/**/*.*"
+    },
+    {
+      "src": "**/rooibos-roku/**/*.*"
+    },
+    {
+      "src": "**/rooibos-roku/*.*"
+    },
+    1120,
+    1001,
+    1128,
+    {
+      "src": "**/*spec.bs",
+      "codes": ["LINT3011"]
+    },
+    {
+      "src": "../src-sample/**/RALETracker*.*"
+    }
+  ],
+  "emitDefinitions": true,
+  "plugins": [
+    "maestro-roku-bsc-plugin",
+    "rooibos-roku",
+    "@rokucommunity/bslint"
+  ],
+  "rooibos": {
+    "isRecordingCodeCoverage": false,
+    "testsFilePattern": null,
+    "tags": ["!integration", "!deprecated", "!fixme"],
+    "showOnlyFailures": true,
+    "catchCrashes": true,
+    "lineWidth": 70
+  },
+  "rokuLog": {
+    "strip": false,
+    "insertPkgPath": true
+  },
+  "maestro": {
+    "excludeFilters": ["**/roku_modules/**/*", "**/rooibos-roku/**/*"],
+    "buildForIDE": true,
+    "extraValidation": {
+      "doExtraValidation": true,
+      "doExtraImportValidation": true,
+      "excludeFilters": []
+    }
+  },
+  "sourceMap": true
+}

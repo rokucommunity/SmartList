@@ -1,0 +1,339 @@
+import "pkg:/source/core/Utils.bs"
+
+namespace mv
+  function findNodes(nodeIds as mc.types.array) as void
+    if type(nodeIds) = "roArray"
+      for each nodeId in nodeIds
+        node = m.top.findNode(nodeId)
+        if node <> invalid
+          m[nodeId] = node
+        else
+          mc.private.logWarn("could not find node with id {0}", nodeId)
+        end if
+      end for
+    end if
+  end function
+
+  function getFirstParentWithType(node as mc.types.node, parentType as string) as mc.types.node
+    currentNode = node
+
+    while currentNode <> invalid
+
+      if currentNode.subType() = parentType
+        return currentNode
+      end if
+
+      currentNode = currentNode.getParent()
+    end while
+    return invalid
+  end function
+
+  function getFieldInParent(content as mc.types.node, fieldName as string, maxIterations = 3 as integer, defaultValue = {} as dynamic) as dynamic
+    currentNode = content
+    value = invalid
+
+    i = 0
+    while currentNode <> invalid and i < maxIterations
+      value = currentNode[fieldName]
+      if value <> invalid
+        return value
+      end if
+      currentNode = currentNode.getParent()
+      i++
+    end while
+
+    return defaultValue
+  end function
+
+  function destroyView(view as mc.types.node)
+    p = view.getParent()
+
+    if p <> invalid
+      p.removeChild(view)
+    end if
+  end function
+
+  function createViewsFromStyleJson(childrenJson as mc.types.array, targetNode = invalid as mc.types.node, assignViewsToM = true as boolean, mTarget = invalid as mc.types.assocarray, updateDataMappedIds = false as boolean)
+    if mTarget = invalid
+      mTarget = m
+    end if
+    if targetNode = invalid
+      targetNode = m.top
+    end if
+    'TODO - convert this to use update api, for speed.
+    if mc.isArray(childrenJson)
+      if type(targetNode) = "roSGNode"
+        for i = 0 to childrenJson.count() - 1
+          nodeJson = childrenJson[i]
+
+          nodeType = nodeJson._type
+          if nodeType <> invalid
+            children = nodeJson._children
+            id = nodeJson.id
+            _type = nodeJson._type
+            _children = nodeJson._children
+            _dataMap = nodeJson._dataMap
+            _initializeAfterCreatingChildren = nodeJson._initializeAfterCreatingChildren = true
+            nodeJson.delete("id")
+            nodeJson.delete("_type")
+            nodeJson.delete("_children")
+            nodeJson.delete("_dataMap")
+            view = mc.createSGNode(nodeType, targetNode, id, nodeJson, not _initializeAfterCreatingChildren, mTarget)
+            nodeJson.id = id
+            nodeJson._type = _type
+            nodeJson._children = _children
+            if view <> invalid
+              if _dataMap <> invalid
+                mc.setOrAddNodeField(view, "_dataMap", _dataMap)
+                if updateDataMappedIds
+                  if mTarget._dataMappedControlIds = invalid
+                    mTarget._dataMappedControlIds = []
+                  end if
+                  mTarget._dataMappedControlIds.push(id)
+                end if
+              end if
+              if children <> invalid
+                mv.createViewsFromStyleJson(children, view, assignViewsToM, mTarget, updateDataMappedIds)
+              end if
+              if assignViewsToM and id <> invalid
+                if mTarget[id] <> invalid
+                  mc.private.logWarn("CREATE VIEW FROM STYLE JSON: Target view already had a view set for id", id)
+                end if
+                mTarget[id] = view
+              end if
+            else
+              mc.private.logError("CREATE VIEW FROM STYLE JSON: Could not create view ", id, "with type", nodeType)
+            end if
+            if _initializeAfterCreatingChildren
+              view@._initialize()
+            end if
+          else
+            mc.private.logError("CREATE VIEW FROM STYLE JSON: Could not create view ", nodeJson.id, "no _type specified")
+          end if
+        end for
+      else
+        mc.private.logError("CREATE VIEW FROM STYLE JSON: Could not create views from style Json: Target node was invalid")
+      end if
+    else
+      mc.private.logError("CREATE VIEW FROM STYLE JSON: Could not create view in targetNode", mc.dv(targetNode), "json was invalid")
+    end if
+  end function
+
+  ' update views, which have fields mapped to the node ids with json of the form of:
+  '   - createViewsFromStyleJson form (i.e. an array of views)
+  '   - dictionary of views.
+  ' @param {assocarray|array} json - json to apply - either an array of views to update, or a nested json structure, as used in createViewsFromStyleJson
+  ' in which case all the
+  ' @param {assocarray} mTarget - the m to look up field names on
+  function updateViewsWithStyleJson(json as dynamic, mTarget = invalid as mc.types.assocarray, isChild = false as boolean)
+    if mTarget = invalid
+      mTarget = m
+    end if
+
+    if mc.isArray(json)
+      for each childJson in json
+        if childJson.id <> invalid and childJson.id <> ""
+          node = mTarget[childJson.id]
+          if node <> invalid
+            id = childJson.id
+            _type = childJson._type
+            _children = childJson._children
+
+            childJson.delete("id")
+            childJson.delete("_type")
+            childJson.delete("_children")
+            node.setFields(childJson)
+            childJson.id = id
+            childJson._type = _type
+            childJson._children = _children
+          else
+            mc.private.logError("could not find node with ", id, "on ", mc.getPath(mTarget, "__classname", "UNKNOWN CLASS"))
+          end if
+          if childJson._children <> invalid
+            mv.updateViewsWithStyleJson(childJson._children, mTarget, true)
+          end if
+        end if
+      end for
+    else if mc.isAACompatible(json)
+      if isChild
+        node = mTarget[json.id]
+        if node <> invalid
+          id = json.id
+          _type = json._type
+          _children = json._children
+
+          json.delete("id")
+          json.delete("_type")
+          json.delete("_children")
+          node.setFields(json)
+          json.id = id
+          json._type = _type
+          json._children = _children
+        else
+          mc.private.logError("could not find node with ", id, "on ", mc.getPath(mTarget, "__classname", "UNKNOWN CLASS"))
+        end if
+        if json._children <> invalid
+          mv.updateViewsWithStyleJson(json._children, mTarget, true)
+        end if
+      else
+        'legacy compatability
+        for each id in json
+          nodeJson = json[id]
+          if mc.isAACompatible(nodeJson)
+            node = mTarget[id]
+            if node <> invalid
+              id = nodeJson.id
+              _type = nodeJson._type
+              _children = nodeJson._children
+
+              nodeJson.delete("id")
+              nodeJson.delete("_type")
+              nodeJson.delete("_children")
+              node.setFields(nodeJson)
+              nodeJson.id = id
+              nodeJson._type = _type
+              nodeJson._children = _children
+
+            else
+              mc.private.logError("could not find node with ", id, "on ", mc.getPath(mTarget, "__classname", "UNKNOWN CLASS"))
+            end if
+            if nodeJson._children <> invalid
+              mv.updateViewsWithStyleJson(nodeJson._children, mTarget)
+            end if
+
+          else
+            mc.private.logError("found illegal json with style id ", id)
+          end if
+        end for
+      end if
+    else
+      mc.private.logError("could not apply style json in ", mc.getPath(mTarget, "__className", "UNKNOWN CLASS"), "json was invalid - expect key pairs for views that already exist on m")
+    end if
+  end function
+
+  ' given json of the form of createViewsFromStyleJson, will return a json blob
+  ' describing the current values of the fields that are stored
+  ' this is used to generate animation keys, and for other framework purposes
+  function getCurrentValuesWithStyleJson(json as dynamic, mTarget = invalid as mc.types.assocarray, nodes = {} as mc.types.assocarray) as dynamic
+    if mTarget = invalid
+      mTarget = m
+    end if
+
+    if mc.isArray(json)
+      for each childJson in json
+        if childJson.id <> invalid and childJson.id <> ""
+          mv.getCurrentValuesWithStyleJson(childJson, mTarget, nodes)
+        end if
+      end for
+    else if mc.isAACompatible(json) and json.id <> invalid and json.id <> ""
+      node = mTarget[json.id]
+      if node <> invalid
+        nodeJson = {}
+        for each key in json
+          if key <> "_type" and key <> "_children"
+            nodeJson[key] = node[key]
+          end if
+        end for
+        nodes[nodeJson.id] = nodeJson
+      else
+        mc.private.logWarn("could not find node with ", json.id, "on ", mc.getPath(mTarget, "__classname", "UNKNOWN CLASS"))
+      end if
+      if json._children <> invalid
+        mv.getCurrentValuesWithStyleJson(json._children, mTarget, nodes)
+      end if
+    else
+      mc.private.logError("could not apply style json in ", mc.getPath(mTarget, "__className", "UNKNOWN CLASS"), "json was invalid - expect key pairs for views that already exist on m")
+    end if
+
+    return nodes
+  end function
+
+  ' given json of the form of createViewsFromStyleJson, will return a json blob
+  ' describing the current values of the fields that are stored
+  ' this is used to generate animation keys, and for other framework purposes
+  function getRootValuesWithStyleJson(sourceJson as dynamic, targetJson as dynamic, nodes = {} as mc.types.assocarray) as dynamic
+
+    sourceMap = mv.getMapFromStyleJson(sourceJson)
+    targetMap = mv.getMapFromStyleJson(targetJson)
+    for each id in targetMap
+      json = {}
+      itemJson = sourceMap[id]
+      if itemJson <> invalid
+        for each key in itemJson
+          if key <> "_type" and key <> "_children"
+            json[key] = itemJson[key]
+          end if
+        end for
+      end if
+      nodes[id] = json
+    end for
+    return nodes
+  end function
+
+  ' returns a flat map from a styles json structure
+  function getMapFromStyleJson(json as dynamic, nodes = {} as mc.types.assocarray) as dynamic
+
+    if mc.isArray(json)
+      for each childtargetJson in json
+        if childtargetJson.id <> invalid and childtargetJson.id <> ""
+          mv.getMapFromStyleJson(childtargetJson, nodes)
+        end if
+      end for
+    else if mc.isAACompatible(json) and json.id <> invalid and json.id <> ""
+      nodeJson = {}
+      for each key in json
+        if key <> "_type" and key <> "_children"
+          nodeJson[key] = json[key]
+        end if
+      end for
+      nodes[json.id] = nodeJson
+      if json._children <> invalid
+        mv.getMapFromStyleJson(json._children, nodes)
+      end if
+    else
+      mc.private.logError("invalid json")
+    end if
+
+    return nodes
+  end function
+
+  function getIdsFromStyleJson(childrenJson as mc.types.array, ids = [] as mc.types.array) as mc.types.array
+    for i = 0 to childrenJson.count() - 1
+      nodeJson = childrenJson[i]
+      id = nodeJson.id
+      if id <> invalid
+        ids.push(id)
+        children = nodeJson._children
+        if children <> invalid
+          mv.getIdsFromStyleJson(children, ids)
+        end if
+      end if
+    end for
+    return ids
+  end function
+
+  ' params {node} control
+  ' params {node|assocarray|invalid} datasource
+  function applyDataMap(control as mc.types.node, dataSource = invalid as dynamic)
+    dataMaps = mc.getAA(control, "_dataMap")
+    for each field in dataMaps
+      dataMap = dataMaps[field]
+      if mc.isString(dataMap)
+        mc.setPath(control, field, mc.getPath(dataSource, dataMap))
+      else if mc.isAACompatible(dataMap)
+        if dataMap.field <> invalid
+          value = mc.getPath(dataSource, dataMap.field)
+          if dataMap.template <> invalid and mc.isString(dataMap.template)
+            if value <> ""
+              value = dataMap.template.replace("{{value}}", value)
+            end if
+          end if
+          mc.setPath(control, field, value)
+        else if dataMap.value <> invalid
+          mc.setPath(control, field, dataMap.value)
+        end if
+      end if
+    end for
+  end function
+
+end namespace

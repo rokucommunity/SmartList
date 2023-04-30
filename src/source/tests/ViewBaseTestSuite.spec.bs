@@ -1,0 +1,21 @@
+import "pkg:/source/roku_modules/log/LogMixin.brs"
+import "pkg:/source/tests/BaseTestSuite.spec.bs"
+
+namespace mv.tests
+
+  @strict
+  class BaseTestSuite extends tests.BaseTestSuite
+    private styleManager
+
+    protected override function beforeEach()
+    end function
+
+    protected override function afterEach()
+    end function
+  end class
+
+  function setUpMScope()
+    log.initializeLogManager()
+    m.log = new log.Logger("rooibosScope")
+  end function
+end namespace

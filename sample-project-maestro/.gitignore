@@ -1,0 +1,58 @@
+.DS_Store
+build
+ci-build
+build-scripts
+###BrightScript specific
+dist/apps
+out/
+artifacts/
+
+#Rooibos generated
+rooibosFunctionMap.brs
+
+### Eclipse project files
+
+.metadata
+bin/
+tmp/
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.settings/
+.loadpath
+.recommenders
+
+# Eclipse Core
+.project
+.classpath
+
+# External tool builders
+.externalToolBuilders/
+
+# Locally stored "Eclipse launch configurations"
+*.launch
+
+node_modules/
+out
+**/roku_modules/
+package-lock.json
+figma-plugin/*.js
+
+!.vscode
+.vscode/.env
+.vscode/project.xsd
+
+# The built product
+NextGenRoku.zip
+
+# Each team member has their own tdd file
+bsconfig-tdd.json
+
+# Ignore developer's overlay images
+src-dev/images
+src-dev/meta/DebugFlags.json
+
+.history
+roku-robot/

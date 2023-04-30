@@ -16,7 +16,7 @@ NOTE: this is a work in progress. Nothing has been published, and the design is 
 The preferred way to install the list is through the [ropm package manager for roku](https://github.com/rokucommunity/ropm)
 
 ```bash
-ropm install roku-smart-label
+ropm install roku-smart-list
 ```
 
 ### Manual install
@@ -54,7 +54,7 @@ Now we need to populate the list with some data:
 ```vb
 sub init()
     m.homeList = m.top.findNode("homeList")
-    
+
     rowCount = 10
     cellCount = 10
 

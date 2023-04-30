@@ -1,0 +1,72 @@
+
+' /**
+'  * @module FocusMixin
+'  * @description Mixin methods for managing focus
+'  */
+
+namespace mv
+  '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  '++ FOCUS
+  '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+  ' /**
+  '  * @member initializeFocusManager
+  '  * @memberof module:FocusMixin
+  '  * @instance
+  '  * @function
+  '  * @description creates the FocusManager, used by the FocusMixin. This method should be called early on in your app initializatoin (e.g in the init method of your AppController, or similar class)
+  '  * @param {global} - globalNode pointer to globalNode (i.e. m.global)
+  '  */
+  function initializeFocusManager(globalNode as mc.types.node, isLogging = false as boolean)
+    focusManager = createObject("roSGNode", "mv_FocusManager")
+    globalNode.addFields({ "focusManager": focusManager })
+    focusManager.isLogging = isLogging
+  end function
+
+  ' /**
+  '  * @member setFocus
+  '  * @memberof module:FocusMixin
+  '  * @instance
+  '  * @function
+  '  * @description sets focus on the passed in node. Will do nothing if the node is invalid, undefined, or not currently on the scene.
+  '  * @param {roSGNode} node - node to set focus on
+  '  * @param {boolean} forceSet - will set focus, even if the focus lock is on
+  '  */
+  function setFocus(node as mc.types.node, forceSet = false as boolean)
+    m.global.focusManager@._setFocusOn(node, forceSet)
+  end function
+
+  '*************************************************************
+  '** unsetFocus
+  '** abstracts focus un setting to make it easier to debug
+  '** @param node as roSGNode - to set focus to
+  '*************************************************************
+  ' /**
+  '  * @member unsetFocus
+  '  * @memberof module:FocusMixin
+  '  * @instance
+  '  * @function
+  '  * @description there are rare; but valid occasions where one might call node.setFocus. This method is provided as a abstraction, to facilitate better debugging
+  '  * @param {roSGNode} node - node to unset focus on
+  '  */
+  function unsetFocus(node as mc.types.node)
+    m.global.focusManager@._unsetFocusOn(node)
+  end function
+
+  ' /**
+  '  * @member setFocusLocked
+  '  * @memberof module:FocusMixin
+  '  * @instance
+  '  * @function
+  '  * @description toggles if the focus is locked. If the focus is locked, then any call to setFocus will not work.
+  '  * @param {boolean} - isLocked
+  '  * @param {string} - focusLockReason - the reason for locking - this will appear in m.log.ging output
+  '  */
+  function setFocusLocked(node as mc.types.node, focusLockReason = "" as string)
+    m.global.focusManager@._setFocusLocked(node, focusLockReason)
+  end function
+
+  function setFocusUnlocked(reason = "" as string)
+    m.global.focusManager@._setFocusLocked(invalid, reason)
+  end function
+end namespace
