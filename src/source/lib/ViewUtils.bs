@@ -1,4 +1,4 @@
-import "pkg:/source/core/Utils.bs"
+import "pkg:/source/lib/Utils.bs"
 
 namespace sv
   function findNodes(nodeIds as mc.types.array) as void

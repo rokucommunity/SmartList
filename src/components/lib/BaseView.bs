@@ -1,10 +1,9 @@
 import "pkg:/source/roku_modules/log/LogMixin.brs"
-import "pkg:/source/core/Utils.bs"
 import "pkg:/components/view/mixin/FocusMixin.bs"
 import "pkg:/components/view/mixin/KeyMixin.bs"
-import "pkg:/source/core/Utils.bs"
-import "pkg:/source/view/ViewUtils.bs"
-import "pkg:/source/core/Types-Polyfill.bs"
+import "pkg:/source/lib/Utils.bs"
+import "pkg:/source/lib/ViewUtils.bs"
+import "pkg:/source/lib/Types-Polyfill.bs"
 
 ' /**
 '  * @module BaseView

@@ -1,7 +1,7 @@
 import "pkg:/source/sl/ListMixin.bs"
 import "pkg:/source/sl/RowItemScroller.bs"
 import "pkg:/source/sl/RowItemViewManager.bs"
-import "pkg:/source/view/BaseView.bs"
+import "pkg:/source/lib/BaseView.bs"
 import "pkg:/source/sl/CellInfo.bs"
 import "pkg:/source/sl/FocusIndicatorConfig.bs"
 import "pkg:/source/sl/CommonListApi.bs"

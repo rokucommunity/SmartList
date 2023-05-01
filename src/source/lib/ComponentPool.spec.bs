@@ -1,5 +1,5 @@
 import "pkg:/source/tests/BaseTestSuite.spec.bs"
-import "pkg:/source/core/ComponentPool.bs"
+import "pkg:/source/lib/ComponentPool.bs"
 namespace tests
   @suite("ComponentPool tests")
   class ComponentPoolTest extends tests.BaseTestSuite

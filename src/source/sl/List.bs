@@ -1,8 +1,8 @@
 import "pkg:/source/sl/ListItemScroller.bs"
 import "pkg:/source/sl/ListItemViewManager.bs"
 import "pkg:/source/sl/ListMixin.bs"
-import "pkg:/source/view/BaseView.bs"
-import "pkg:/source/view/Animation.bs"
+import "pkg:/source/lib/BaseView.bs"
+import "pkg:/source/lib/Animation.bs"
 import "pkg:/source/sl/FocusIndicatorConfig.bs"
 import "pkg:/source/sl/ListContentManager.bs"
 

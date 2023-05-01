@@ -1,5 +1,5 @@
 import "pkg:/source/tests/BaseTestSuite.spec.bs"
-import "pkg:/source/core/Tasks.bs"
+import "pkg:/source/lib/Tasks.bs"
 
 namespace tests
   @suite("Tasks tests")

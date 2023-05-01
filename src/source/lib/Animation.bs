@@ -1,7 +1,7 @@
 import "pkg:/source/roku_modules/log/LogMixin.brs"
-import "pkg:/source/core/Utils.bs"
-import "pkg:/source/core/Tasks.bs"
-import "pkg:/source/view/ViewUtils.bs"
+import "pkg:/source/lib/Utils.bs"
+import "pkg:/source/lib/Tasks.bs"
+import "pkg:/source/lib/ViewUtils.bs"
 
 namespace sv.animations.utils
   function colorTo(target as mc.types.node, duration as float, toValue as integer, start = true as boolean, delay = 0 as float) as sv.animations.Fade

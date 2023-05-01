@@ -1,13 +1,13 @@
 import "pkg:/source/roku_modules/log/LogMixin.brs"
 import "pkg:/source/roku_modules/maestro/core/Utils.brs"
-import "pkg:/components/sl/mixin/FocusMixin.brs"
+import "pkg:/source/roku_modules/maestro/view/NodeClass.brs"
+import "pkg:/components/roku_modules/maestro/view/mixin/FocusMixin.brs"
 import "pkg:/source/lib/Animation.bs"
-import "pkg:/source/sl/NodeClass.brs"
 
 namespace sc.sample
 
   @node("MainScene", "Scene")
-  class MainScene extends sv.NodeClass
+  class MainScene extends mv.NodeClass
     '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     '++ Debug Fields
     '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -121,7 +121,7 @@ namespace sc.sample
       m.launchSequence = m.createTask("sc_LaunchSequence", invalid, m.onLaunchSequenceResult)
     end function
 
-    private function onLaunchSequenceResult(result as sc.Result)
+    private function onLaunchSequenceResult(result as mc.Result)
       if result.isOK
         m.log.info("launch sequence is complete - showing main screen")
         mioc.setInstance("appArgs", m.args)

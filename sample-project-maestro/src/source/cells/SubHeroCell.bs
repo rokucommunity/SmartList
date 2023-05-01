@@ -2,7 +2,7 @@ import "pkg:/source/roku_modules/maestro/core/Utils.brs"
 import "pkg:/source/sl/ListMixin.bs"
 import "pkg:/source/sl/RowItemScroller.bs"
 import "pkg:/source/sl/RowItemViewManager.bs"
-import "pkg:/source/roku_modules/view/BaseView.brs"
+import "pkg:/source/lib/BaseView.bs"
 import "pkg:/source/sl/cells/BaseCell.bs"
 
 @node("SubHeroCell", "sl_BaseCell")

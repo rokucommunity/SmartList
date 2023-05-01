@@ -19,6 +19,7 @@ namespace sl
     public upScreenPosition = 0
     public downScreenPosition = 0
     private lastFlowDirection = 1
+    'bs:disable-next-line
     private placeHolderCell = m.createSGNode("sl_BaseCell", invalid, "#_#phc")
     private renderedRows = {}
 

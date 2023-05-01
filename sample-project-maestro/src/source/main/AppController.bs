@@ -2,7 +2,7 @@ import "pkg:/source/roku_modules/maestro/view/BaseScreen.brs"
 import "pkg:/source/roku_modules/maestro/core/Registry.brs"
 import "pkg:/source/roku_modules/maestro/view/BaseAppController.brs"
 
-namespace sc.sample
+namespace mc.sample
   @node("AppController", "mv_BaseView")
   class AppController extends mv.BaseAppController
 
@@ -33,7 +33,7 @@ namespace sc.sample
     '++ Private fields
     '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-    private registry = new sc.Registry()
+    private registry = new mc.Registry()
     private bundle as mc.types.assocarray
 
     '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -49,7 +49,7 @@ namespace sc.sample
       super.initialize()
       'for mucking around with @sync injection
       settings = m.createSGNode("ContentNode")
-      sc.setOrAddNodeField(settings, "spoilersActive", false)
+      mc.setOrAddNodeField(settings, "spoilersActive", false)
       m.setInstance("user", { settings: settings })
 
       m.bundle = m.styleManager@.loadBundle("pkg:/source/main/AppController.bundle")
@@ -99,7 +99,7 @@ namespace sc.sample
         item = m.createSGNode("ContentNode", invalid, itemJson.id, {
           title: itemJson.title
         })
-        sc.setOrAddNodeField(item, "screenType", itemJson.screen)
+        mc.setOrAddNodeField(item, "screenType", itemJson.screen)
         if itemJson.isDefault = true
           m.homeItem = item
         end if

@@ -1,5 +1,5 @@
 import "pkg:/source/sl/ListMixin.bs"
-import "pkg:/source/core/Utils.bs"
+import "pkg:/source/lib/Utils.bs"
 
 @node("sl_RowHeader", "Group")
 class RowHeader
