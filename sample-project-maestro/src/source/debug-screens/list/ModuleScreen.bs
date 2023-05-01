@@ -1,6 +1,6 @@
-import "pkg:/source/ml/ListMixin.bs"
-import "pkg:/source/view/BaseScreen.bs"
-import "pkg:/source/core/DebugTimer.bs"
+import "pkg:/source/sl/ListMixin.bs"
+import "pkg:/source/roku_modules/maestro/view/BaseScreen.brs"
+import "pkg:/source/roku_modules/maestro/core/DebugTimer.brs"
 
 @node("ModuleScreen", "mv_BaseScreen")
 class ModuleScreen extends mv.BaseScreen
@@ -27,7 +27,7 @@ class ModuleScreen extends mv.BaseScreen
   '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
   private numberOfRows = 20
-  private defaultCellType = "ml_SimpleCell"
+  private defaultCellType = "sl_SimpleCell"
   public componentPool as mc.types.node
   private contentId = 0
   private rowSettings
@@ -52,7 +52,7 @@ class ModuleScreen extends mv.BaseScreen
     m.button = m.createSGNode("Button", m.top, "button", {
       title: "focus me"
     })
-    m.bgRect = m.createSGNode("mv_Rectangle", m.top, "bgRect", {
+    m.bgRect = m.createSGNode("sv_Rectangle", m.top, "bgRect", {
       translation: translation
       size: size
       color: "#6a307d"
@@ -60,7 +60,7 @@ class ModuleScreen extends mv.BaseScreen
     m.listHolder = m.createSGNode("Group", m.top, "listHolder")
     m.componentPool = m.global.componentPool
 
-    m.list = m.createSGNode("ml_List", m.listHolder, "list", {
+    m.list = m.createSGNode("sl_List", m.listHolder, "list", {
       translation: translation
       width: size[0]
       height: size[1]
@@ -79,18 +79,18 @@ class ModuleScreen extends mv.BaseScreen
 
   private function onResetChange()
     m.list.content = invalid
-    m.cellSettings = ml.listMixin.createCellSettings("ml_SimpleCell", [307, 100], 30)
+    m.cellSettings = sl.listMixin.createCellSettings("sl_SimpleCell", [307, 100], 30)
 
     timer = new mc.utils.DebugTimer("list")
-    m.rowSettings = ml.listMixin.createRowSettings(m.cellSettings, invalid, 30)
+    m.rowSettings = sl.listMixin.createRowSettings(m.cellSettings, invalid, 30)
 
-    m.focusSettings = ml.listMixin.createFocusSettings("fixed", [-5, -5, 5, 5])
-    listSettings = ml.listMixin.createListSettings()
+    m.focusSettings = sl.listMixin.createFocusSettings("fixed", [-5, -5, 5, 5])
+    listSettings = sl.listMixin.createListSettings()
     listSettings.rowCreationStrategy = "async"
     listSettings.rowCreationBatchSize = 5
     listSettings.rowCreationBatchDelay = 0.3
 
-    content = ml.listMixin.createListContent(m.focusSettings, m.rowSettings, listSettings)
+    content = sl.listMixin.createListContent(m.focusSettings, m.rowSettings, listSettings)
     ' items = m.createHeaderOnlyData()
     timer.log("makeData")
     m.setFocus(m.loadingIndicator)
@@ -123,13 +123,13 @@ class ModuleScreen extends mv.BaseScreen
   private function createHeaderOnlyData()
     content = []
     i = 0
-    row = createObject("roSGNode", "ml_RowContent")
+    row = createObject("roSGNode", "sl_RowContent")
     row.id = rnd(2147483647).toStr()
     numItems = 5
-    row0FocusSettings = ml.listMixin.createFocusSettings("fixed", [0, 0, 0, 0])
+    row0FocusSettings = sl.listMixin.createFocusSettings("fixed", [0, 0, 0, 0])
     row0FocusSettings.feedbackStyle = "none"
-    cellSettings = ml.listMixin.createCellSettings("HeroCell", [1100, 700], 30)
-    row.settings = ml.listMixin.createRowSettings(cellSettings, row0FocusSettings)
+    cellSettings = sl.listMixin.createCellSettings("HeroCell", [1100, 700], 30)
+    row.settings = sl.listMixin.createRowSettings(cellSettings, row0FocusSettings)
     row.settings.headerSettings.position = "none"
     row.settings.contentOffset = [400, -30]
     prefix = "HERO"
@@ -144,10 +144,10 @@ class ModuleScreen extends mv.BaseScreen
   end function
 
   private function createModule(title as string, numItems as integer)
-    gridFocusSettings = ml.listMixin.createFocusSettings("floating", [0, 0, 0, 0])
-    row = createObject("roSGNode", "ml_RowContent")
+    gridFocusSettings = sl.listMixin.createFocusSettings("floating", [0, 0, 0, 0])
+    row = createObject("roSGNode", "sl_RowContent")
     row.id = rnd(2147483647).toStr()
-    row.settings = ml.listMixin.createGridRowSettings(m.cellSettings, gridFocusSettings, 30, invalid, 150, 3, 150, 3)
+    row.settings = sl.listMixin.createGridRowSettings(m.cellSettings, gridFocusSettings, 30, invalid, 150, 3, 150, 3)
     row.screenPos = 0
     row.firstRowScreenPos = 400
     row.otherRowScreenPos = 70
@@ -199,44 +199,44 @@ class ModuleScreen extends mv.BaseScreen
   '++ List Delegate Methods
   '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-  ' private function onCellWillGainFocus(event as ml.ListEvent)
+  ' private function onCellWillGainFocus(event as sl.ListEvent)
   '   ? "+SCREEN onCellWillGainFocus : R: "; event.rowIndex ; " I: " ; event.cellIndex; " D:" ; direction
   ' end function
 
-  ' private function onCellDidGainFocus(event as ml.ListEvent)
+  ' private function onCellDidGainFocus(event as sl.ListEvent)
   '   ? "+SCREEN onCellDidGainFocus  : R: "; event.rowIndex ; " I: " ; event.cellIndex; " D:" ; direction
   ' end function
 
 
-  ' private function onCellDidLoseFocus(event as ml.ListEvent)
+  ' private function onCellDidLoseFocus(event as sl.ListEvent)
   '   ? "+SCREEN onCellDidLoseFocus : R: "; event.rowIndex ; " I: " ; event.cellIndex; " D:" ; direction
   ' end function
 
-  ' private function onRowDidGainFocus(event as ml.ListEvent)
+  ' private function onRowDidGainFocus(event as sl.ListEvent)
   '   ? "+SCREEN onRowDidGainFocus : R: "; event.rowIndex ; " D:" ; direction
   ' end function
 
-  ' private function onRowDidLoseFocus(event as ml.ListEvent)
+  ' private function onRowDidLoseFocus(event as sl.ListEvent)
   '   ? "+SCREEN onRowDidLoseFocus : R: "; event.rowIndex ; " D:" ; direction
   ' end function
 
-  ' private function onRowGainingFocus(event as ml.ListEvent)
+  ' private function onRowGainingFocus(event as sl.ListEvent)
   '   ? "+SCREEN onRowGainingFocus : R: "; event.rowIndex ; " D:" ; direction ; " F: " ; fraction
   ' end function
 
-  ' private function onRowLosingFocus(event as ml.ListEvent)
+  ' private function onRowLosingFocus(event as sl.ListEvent)
   '   ? "+ onRowLosingFocus : R: "; event.rowIndex ; " D:" ; direction ; " F: " ; fraction
   ' end function
 
-  ' private function onCellGainingFocus(event as ml.ListEvent)
+  ' private function onCellGainingFocus(event as sl.ListEvent)
   '   ? "+SCREEN onCellGainingFocus : R: "; event.rowIndex ; " C " ; cellIndex; " D:" ; direction ; " F: " ; fraction
   ' end function
 
-  ' private function onCellLosingFocus(event as ml.ListEvent)
+  ' private function onCellLosingFocus(event as sl.ListEvent)
   '   ? "+ onRowLosingFocus : R: "; event.rowIndex ; " D:" ; " C " ; cellIndex; direction ; " F: " ; fraction
   ' end function
 
-  private function onItemSelected(event as ml.ListEvent)
+  private function onItemSelected(event as sl.ListEvent)
     ? ">>>onItemSelected changed to:" ; event.rowIndex ; "," ; event.cellIndex
     rowContent = m.list.content.getChild(event.rowIndex)
     title = `NEW Item ${m.contentId}`
@@ -310,7 +310,7 @@ class ModuleScreen extends mv.BaseScreen
     'ensure that row offsets are applied correctly
     for each module in modules
       if module.count() > 0
-        if numModules > 0 and module.settings.subType() = "ml_GridRowSettings"
+        if numModules > 0 and module.settings.subType() = "sl_GridRowSettings"
           settings = module.settings.clone(true)
           settings.firstRowScreenPos = settings.otherRowScreenPos
           module.settings = settings
@@ -349,7 +349,7 @@ class ModuleScreen extends mv.BaseScreen
   private function recreateList()
     ? "RECREATING LIST"
 
-    m.list = m.createSGNode("ml_List", m.listHolder, "list", {
+    m.list = m.createSGNode("sl_List", m.listHolder, "list", {
       width: 1920
       height: 1080
     })
@@ -367,7 +367,7 @@ class ModuleScreen extends mv.BaseScreen
   private function onKeyPressOptions() as boolean
 
     ? "RESETTING LIST"
-    m.list.content = ml.listMixin.createListContent()
+    m.list.content = sl.listMixin.createListContent()
 
     m.setTimeout(m.removeList(), 1)
     m.setTimeout(m.recreateList(), 2)

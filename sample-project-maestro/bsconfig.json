@@ -12,11 +12,10 @@
     "meta/**/*.*",
     "components/**/*.*",
     "source/tests/**/*.*",
-    { "src": "../src-dev/source/**/*.*", "dest": "source" },
-    {
-      "src": "../roku-robot/src/source/robot/**/*.*",
-      "dest": "source/robot"
-    }
+    { "src": "../lib/source/**/*.*", "dest": "source" },
+    { "src": "!../lib/source/**/Global.bs" },
+    { "src": "../lib/components/**/*.*", "dest": "components" },
+    { "src": "../src-dev/source/**/*.*", "dest": "source" }
   ],
   "autoImportComponentScript": true,
   "createPackage": false,
@@ -38,7 +37,7 @@
       "codes": ["LINT3011"]
     },
     {
-      "src": "../roku-robot/src/source/robot/**/*spec.bs",
+      "src": "../lib/**/*spec.bs",
       "codes": ["LINT3011"]
     },
     1128

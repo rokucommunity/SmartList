@@ -30,9 +30,9 @@ function getViewName()
 end function
 
 function onDebugMChange()
-  mc.setOrAddNodeField(m.top, "__m", mc.private.getDebugMObject(m))
+  sc.setOrAddNodeField(m.top, "__m", sc.private.getDebugMObject(m))
   if m.vm <> invalid
-    mc.setOrAddNodeField(m.top, "__vm", mc.private.getDebugMObject(m.vm))
+    sc.setOrAddNodeField(m.top, "__vm", sc.private.getDebugMObject(m.vm))
   end if
 end function
 
@@ -82,7 +82,7 @@ function _onShow(args as mc.types.assocarray) as void
 
   if not m.wasShown
     'bs:disable-next-line
-    if mc.isFunction(onFirstShow)
+    if sc.isFunction(onFirstShow)
       'bs:disable-next-line
       onFirstShow()
     end if
@@ -98,7 +98,7 @@ function _onShow(args as mc.types.assocarray) as void
 
   if oldIsShowing <> m.top.isShown
     'bs:disable-next-line
-    if mc.isFunction(onShow)
+    if sc.isFunction(onShow)
       'bs:disable-next-line
       onShow()
     end if
@@ -116,7 +116,7 @@ function _onHide(args as mc.types.assocarray)
   if m.wasShown
     m.top.isShown = false
     'bs:disable-next-line
-    if mc.isFunction(onHide)
+    if sc.isFunction(onHide)
       'bs:disable-next-line
       onHide()
     end if
@@ -141,12 +141,12 @@ function _initialize(args = invalid as mc.types.assocarray)
       m._initialize()
     end if
     'bs:disable-next-line
-    if m.pendingCallbacks <> invalid and m.pendingCallbacks.count() > 0 and mc.isFunction(executePendingCallbacks)
+    if m.pendingCallbacks <> invalid and m.pendingCallbacks.count() > 0 and sc.isFunction(executePendingCallbacks)
       'bs:disable-next-line
       executePendingCallbacks()
     end if
     'bs:disable-next-line
-    if mc.isFunction(m_createVM)
+    if sc.isFunction(m_createVM)
       'bs:disable-next-line
       m_createVM()
     end if
@@ -205,7 +205,7 @@ end function
 
 function onIsFocusedChange()
   if m.global.focusManager.isLogging
-    m.log.verbose("m.top.isFocused", m.top.isFocused, mc.dv(m.top))
+    m.log.verbose("m.top.isFocused", m.top.isFocused, sc.dv(m.top))
   end if
 
   if m.top.isFocused
@@ -217,7 +217,7 @@ end function
 
 function onIsChildFocusedChange()
   if m.global.focusManager.isLogging
-    m.log.verbose("m.top.isChildFocused", m.top.isChildFocused, mc.dv(m.top))
+    m.log.verbose("m.top.isChildFocused", m.top.isChildFocused, sc.dv(m.top))
   end if
 
   if m.top.isChildFocused
@@ -251,7 +251,7 @@ function onGainedFocus(isSelfFocused as boolean)
     end if
 
     'bs:disable-next-line
-    if mc.isFunction(mx_onFocusIdChange)
+    if sc.isFunction(mx_onFocusIdChange)
       'bs:disable-next-line
       mx_onFocusIdChange(m.vm.focusId)
     end if
@@ -295,9 +295,9 @@ end function
 
 function callVMFunc(funcName as string, p1 = "#M_NONE#" as dynamic, p2 = "#M_NONE#" as dynamic, p3 = "#M_NONE#" as dynamic)
   if m.vm <> invalid
-    return mc.callAAFunc(m.vm, funcName, p1, p2, p3)
+    return sc.callAAFunc(m.vm, funcName, p1, p2, p3)
   else
-    return mc.callAAFunc(m, funcName, p1, p2, p3)
+    return sc.callAAFunc(m, funcName, p1, p2, p3)
   end if
 end function
 

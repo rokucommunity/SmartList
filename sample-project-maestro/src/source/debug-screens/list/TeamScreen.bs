@@ -1,8 +1,8 @@
-import "pkg:/source/ml/ListMixin.bs"
-import "pkg:/source/view/BaseScreen.bs"
-import "pkg:/source/core/DebugTimer.bs"
+import "pkg:/source/sl/ListMixin.bs"
+import "pkg:/source/roku_modules/maestro/view/BaseScreen.brs"
+import "pkg:/source/roku_modules/maestro/core/DebugTimer.brs"
 
-namespace ml.sample
+namespace sl.sample
   @node("TeamScreen", "mv_BaseScreen")
   class TeamScreen extends mv.BaseScreen
 
@@ -12,7 +12,7 @@ namespace ml.sample
     private bgRect
 
     'style
-    private defaultCellType = "ml_SimpleCell"
+    private defaultCellType = "sl_SimpleCell"
 
     'state
     public componentPool as mc.types.node
@@ -37,7 +37,7 @@ namespace ml.sample
       translation = [0, 0]
       size = [1920, 1080]
 
-      m.bgRect = m.createSGNode("mv_Rectangle", m.top, "bgRect", {
+      m.bgRect = m.createSGNode("sv_Rectangle", m.top, "bgRect", {
         translation: translation
         size: size
         color: "#6a307d"
@@ -45,7 +45,7 @@ namespace ml.sample
       m.listHolder = m.createSGNode("Group", m.top, "listHolder")
       m.componentPool = m.global.componentPool
 
-      m.list = m.createSGNode("ml_List", m.listHolder, "list", {
+      m.list = m.createSGNode("sl_List", m.listHolder, "list", {
         translation: translation
         width: size[0]
         height: size[1]
@@ -63,11 +63,11 @@ namespace ml.sample
 
     private function onResetChange()
       m.list@.setContent(invalid)
-      m.cellSettings = ml.listMixin.createCellSettings("ml_SimpleCell", [307, 100], 30)
+      m.cellSettings = sl.listMixin.createCellSettings("sl_SimpleCell", [307, 100], 30)
 
       timer = new mc.utils.DebugTimer("list")
-      m.rowSettings = ml.listMixin.createRowSettings(m.cellSettings, invalid, 30)
-      listSettings = ml.listMixin.createListSettings()
+      m.rowSettings = sl.listMixin.createRowSettings(m.cellSettings, invalid, 30)
+      listSettings = sl.listMixin.createListSettings()
       listSettings.rowCreationStrategy = "async"
       listSettings.rowCreationBatchSize = 10
       listSettings.rowCreationBatchDelay = 0.1
@@ -76,8 +76,8 @@ namespace ml.sample
       listSettings.numberItemsToRenderAfter = m.numberItemsToRenderAfter
       listSettings.numberItemsToRenderBefore = m.numberItemsToRenderBefore
 
-      focusSettings = ml.listMixin.createFocusSettings(m.scrollSpeed)
-      content = ml.listMixin.createListContent(focusSettings, m.rowSettings, listSettings)
+      focusSettings = sl.listMixin.createFocusSettings(m.scrollSpeed)
+      content = sl.listMixin.createListContent(focusSettings, m.rowSettings, listSettings)
       items = m.createData()
       timer.log("makeData")
       m.setFocus(m.loadingIndicator)
@@ -111,38 +111,38 @@ namespace ml.sample
 
     private function createData()
       content = []
-      favoriteFocusSettings = ml.listMixin.createFocusSettings("fixed")
-      headerSettings = ml.listMixin.createHeaderSettings([30, 20], 100, "mediumBold,50", "#ffff00")
-      row = createObject("roSGNode", "ml_RowContent")
+      favoriteFocusSettings = sl.listMixin.createFocusSettings("fixed")
+      headerSettings = sl.listMixin.createHeaderSettings([30, 20], 100, "mediumBold,50", "#ffff00")
+      row = createObject("roSGNode", "sl_RowContent")
       row.title = "FAVORITE TEAM"
       row.id = rnd(2147483647).toStr()
-      row.settings = ml.listMixin.createRowSettings(m.cellSettings, favoriteFocusSettings, 30, headerSettings)
+      row.settings = sl.listMixin.createRowSettings(m.cellSettings, favoriteFocusSettings, 30, headerSettings)
       row.settings.contentOffset = [200, 0]
       numItems = 1
       content.push(row)
       m.favoriteModule = row
-      rowFocusSettings = ml.listMixin.createFocusSettings()
+      rowFocusSettings = sl.listMixin.createFocusSettings()
       row.appendChildren(m.makeItems(m.defaultCellType, numItems))
 
-      row = createObject("roSGNode", "ml_RowContent")
+      row = createObject("roSGNode", "sl_RowContent")
       row.title = "FOLLOWING"
       row.id = rnd(2147483647).toStr()
-      row.settings = ml.listMixin.createGridRowSettings(m.cellSettings, rowFocusSettings, 30, invalid, 150, 3, 100, 5, 50)
+      row.settings = sl.listMixin.createGridRowSettings(m.cellSettings, rowFocusSettings, 30, invalid, 150, 3, 100, 5, 50)
       row.settings.contentOffset = [200, 0]
       numItems = 5
       content.push(row)
       m.followingModule = row
       row.appendChildren(m.makeItems(m.defaultCellType, numItems))
 
-      row = createObject("roSGNode", "ml_RowContent")
+      row = createObject("roSGNode", "sl_RowContent")
       row.title = "TEAMS"
       row.id = rnd(2147483647).toStr()
-      longCellSettings = ml.listMixin.createCellSettings("LongCell", [1192, 144], 40)
-      gridFocusSettings = ml.listMixin.createFocusSettings("floating", invalid, "underneath", "fixed")
+      longCellSettings = sl.listMixin.createCellSettings("LongCell", [1192, 144], 40)
+      gridFocusSettings = sl.listMixin.createFocusSettings("floating", invalid, "underneath", "fixed")
       gridFocusSettings.feedbackUri = "pkg:/images/solid.9.png"
       gridFocusSettings.feedbackColor = "#aaaaaa"
-      ' row.settings = ml.listMixin.createRowSettings(m.cellSettings, rowFocusSettings, 30, headerSettings, 200)
-      row.settings = ml.listMixin.createGridRowSettings(longCellSettings, gridFocusSettings, 30, headerSettings, 100, 1, 144, 4, 150)
+      ' row.settings = sl.listMixin.createRowSettings(m.cellSettings, rowFocusSettings, 30, headerSettings, 200)
+      row.settings = sl.listMixin.createGridRowSettings(longCellSettings, gridFocusSettings, 30, headerSettings, 100, 1, 144, 4, 150)
       row.settings.contentOffset = [200, 30]
       numItems = 20
       content.push(row)
@@ -269,7 +269,7 @@ namespace ml.sample
     '++ List Delegate
     '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-    private function onItemSelected(event as ml.ListEvent)
+    private function onItemSelected(event as sl.ListEvent)
       row = m.list.content.getChild(event.rowIndex)
       ? " ITEM IS SELECTED r ", event.rowIndex, "i ", event.cellIndex, " ", mc.dv(row)
       if m.favoriteModule.isSameNode(row)
@@ -287,7 +287,7 @@ namespace ml.sample
     '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     '++ List Delegate Methods
     '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    private function onRowDidGainFocus(event as ml.ListEvent)
+    private function onRowDidGainFocus(event as sl.ListEvent)
       m.log.info("onRowDidGainFocus : R: ", event.rowIndex, "SR: ", event.subRowIndex, " D:", event.direction)
 
       row = m.list@.getRowRenderer(event.rowIndex)
@@ -310,7 +310,7 @@ namespace ml.sample
       ' end if
     end function
 
-    private function onRowDidLoseFocus(event as ml.ListEvent)
+    private function onRowDidLoseFocus(event as sl.ListEvent)
       m.log.info("onRowDidLoseFocus : R: ", event.rowIndex, "SR: ", event.subRowIndex, " D:", event.direction)
 
       ' row = m.list@.getRowRenderer(event.rowIndex)
@@ -320,7 +320,7 @@ namespace ml.sample
 
     end function
 
-    private function onRowGainingFocus(event as ml.ListEvent)
+    private function onRowGainingFocus(event as sl.ListEvent)
       m.log.info("onRowGainingFocus : R: ", event.rowIndex, "SR: ", event.subRowIndex, " D:", event.direction, " F: ", event.fraction)
       ' if event.direction = -1
       '   row = m.list@.getRowRenderer(event.rowIndex)
@@ -328,7 +328,7 @@ namespace ml.sample
       ' end if
     end function
 
-    private function onRowLosingFocus(event as ml.ListEvent)
+    private function onRowLosingFocus(event as sl.ListEvent)
       m.log.info(": R: ", event.rowIndex, "SR: ", event.subRowIndex, " D:", event.direction, " F: ", event.fraction)
       ' if event.direction = 1
       '   row = m.list@.getRowRenderer(event.rowIndex)
@@ -336,7 +336,7 @@ namespace ml.sample
       ' end if
     end function
 
-    private function onCellWillGainFocus(event as ml.ListEvent)
+    private function onCellWillGainFocus(event as sl.ListEvent)
       m.log.info("onCellWillGainFocus : R: ", event.rowIndex, " I: ", event.cellIndex, " D:", event.direction)
       mioc.setInstance("focusedIndex", {
         row: event.rowIndex
@@ -344,7 +344,7 @@ namespace ml.sample
       })
     end function
 
-    private function onCellDidGainFocus(event as ml.ListEvent)
+    private function onCellDidGainFocus(event as sl.ListEvent)
       m.log.info("onCellDidGainFocus  : R: ", event.rowIndex, " I: ", event.cellIndex, " D:", event.direction)
       mioc.setInstance("focusedIndex", {
         row: event.rowIndex
@@ -352,15 +352,15 @@ namespace ml.sample
       })
     end function
 
-    private function onCellWillLoseFocus(event as ml.ListEvent)
+    private function onCellWillLoseFocus(event as sl.ListEvent)
       m.log.info("onCellWillLoseFocus : R: ", event.rowIndex, " I: ", event.cellIndex, " D:", event.direction)
     end function
 
-    private function onCellDidLoseFocus(event as ml.ListEvent)
+    private function onCellDidLoseFocus(event as sl.ListEvent)
       m.log.info("onCellDidLoseFocus : R: ", event.rowIndex, " I: ", event.cellIndex, " D:", event.direction)
     end function
 
-    private function onCellGainingFocus(event as ml.ListEvent)
+    private function onCellGainingFocus(event as sl.ListEvent)
       m.log.info("onCellGainingFocus : R: ", event.rowIndex, " C ", event.cellIndex, " D:", event.direction, " F: ", event.fraction)
       ' if event.direction = -1
       '   row = m.list@.getRowRenderer(event.rowIndex)
@@ -368,7 +368,7 @@ namespace ml.sample
       ' end if
     end function
 
-    private function onCellLosingFocus(event as ml.ListEvent)
+    private function onCellLosingFocus(event as sl.ListEvent)
       m.log.info("onCellLosingFocus : R: ", event.rowIndex, " C ", event.cellIndex, " D:", event.direction, " F: ", event.fraction)
       ' if event.direction = 1
       '   row = m.list@.getRowRenderer(event.rowIndex)

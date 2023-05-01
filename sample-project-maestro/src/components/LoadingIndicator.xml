@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <component
     name='LoadingIndicator'
-    extends='mv_BaseView'>
+    extends='sv_BaseView'>
 
   <interface>
     <!-- URI of the loading indicator image/spinner graphic, if used. -->
@@ -81,9 +81,9 @@
 
   <children>
     <Group id='loadingIndicatorGroup'>
-      <mv_Rectangle id='background' />
+      <sv_Rectangle id='background' />
       <Group id='loadingGroup'>
-        <mv_Poster
+        <sv_Poster
             id='image'
             width='108'
             height='108'>
@@ -98,7 +98,7 @@
                 fieldToInterp='image.rotation' />
           </Animation>
           </Poster>
-          <mv_Label
+          <sv_Label
               id='text'
               height='30'
               text='Loading...'

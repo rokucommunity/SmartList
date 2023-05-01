@@ -1,8 +1,8 @@
-import "pkg:/source/view/BaseScreen.bs"
-import "pkg:/source/core/Registry.bs"
-import "pkg:/source/view/BaseAppController.bs"
+import "pkg:/source/roku_modules/maestro/view/BaseScreen.brs"
+import "pkg:/source/roku_modules/maestro/core/Registry.brs"
+import "pkg:/source/roku_modules/maestro/view/BaseAppController.brs"
 
-namespace mc.sample
+namespace sc.sample
   @node("AppController", "mv_BaseView")
   class AppController extends mv.BaseAppController
 
@@ -33,7 +33,7 @@ namespace mc.sample
     '++ Private fields
     '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-    private registry = new mc.Registry()
+    private registry = new sc.Registry()
     private bundle as mc.types.assocarray
 
     '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -49,7 +49,7 @@ namespace mc.sample
       super.initialize()
       'for mucking around with @sync injection
       settings = m.createSGNode("ContentNode")
-      mc.setOrAddNodeField(settings, "spoilersActive", false)
+      sc.setOrAddNodeField(settings, "spoilersActive", false)
       m.setInstance("user", { settings: settings })
 
       m.bundle = m.styleManager@.loadBundle("pkg:/source/main/AppController.bundle")
@@ -74,8 +74,8 @@ namespace mc.sample
         return
       end if
 
-      m.tabController = m.createSGNode("mv_TabController", m.top, "tabController")
-      m.navMenu = m.createSGNode("mv_ControlsGroup", m.top, "navMenu", {
+      m.tabController = m.createSGNode("sv_TabController", m.top, "tabController")
+      m.navMenu = m.createSGNode("sv_ControlsGroup", m.top, "navMenu", {
         translation: [200, 50]
         layoutMode: "horiz"
         keyDirection: "horiz"
@@ -99,12 +99,12 @@ namespace mc.sample
         item = m.createSGNode("ContentNode", invalid, itemJson.id, {
           title: itemJson.title
         })
-        mc.setOrAddNodeField(item, "screenType", itemJson.screen)
+        sc.setOrAddNodeField(item, "screenType", itemJson.screen)
         if itemJson.isDefault = true
           m.homeItem = item
         end if
         m.menuItems.push(item)
-        m.createSGNode("mv_Button", m.navMenu, item.title, {
+        m.createSGNode("sv_Button", m.navMenu, item.title, {
           text: item.title
         })
       end for

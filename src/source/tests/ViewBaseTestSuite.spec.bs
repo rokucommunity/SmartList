@@ -1,7 +1,7 @@
 import "pkg:/source/roku_modules/log/LogMixin.brs"
 import "pkg:/source/tests/BaseTestSuite.spec.bs"
 
-namespace mv.tests
+namespace sv.tests
 
   @strict
   class BaseTestSuite extends tests.BaseTestSuite

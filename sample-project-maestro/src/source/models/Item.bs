@@ -1,4 +1,4 @@
-import "pkg:/source/core/Utils.bs"
+import "pkg:/source/lib/Utils.bs"
 
 namespace models
   @node("Item", "ContentNode")
@@ -11,7 +11,7 @@ namespace models
     public isSerializable = true
 
     public function toString() as string
-      return "<Item> (" + m.top.id + ") - '" + mc.getPath(m.json, "title", "NO TITLE") + "'"
+      return "<Item> (" + m.top.id + ") - '" + sc.getPath(m.json, "title", "NO TITLE") + "'"
     end function
 
     '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

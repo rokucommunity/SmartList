@@ -1,7 +1,4 @@
 import "pkg:/source/roku_modules/maestro/view/debug/DeveloperScreen.brs"
-import "pkg:/source/robot/lib/SelectionManager.bs"
-import "pkg:/source/robot/lib/DeviceInfoUtil.bs"
-import "pkg:/source/robot/lib/RobotJsonLoader.bs"
 import "pkg:/source/roku_modules/maestro/view/DialogUtils.brs"
 import "pkg:/source/roku_modules/maestro/view/KeyboardDialogUtils.brs"
 import "pkg:/source/roku_modules/maestro/core/Registry.brs"
@@ -9,224 +6,48 @@ import "pkg:/source/roku_modules/maestro/core/Registry.brs"
 namespace main
   @node("DeveloperScreen", "mv_DeveloperScreen")
   class DeveloperScreen extends mv.debug.DeveloperScreen
-    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    '++ Public Fields
-    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    public dynamicContainer as mc.types.node
-
 
     '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    '++ Private Fields
+    '++ Initialization
     '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    private isFocusedOnContent = true
-
-    private selectionManager as mc.types.node
-    private tabController as mc.types.node
-    private navMenu as mc.types.node
-
-    private currentMenuItem as mc.types.node
-
 
     function new()
       super()
     end function
 
-    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    '++ Public Methods
-    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-    public override function onExecuteSelection(selection as mc.types.node) as boolean
-      super.onExecuteSelection(selection)
-      return m.selectionManager.handleSelection(selection)
-    end function
-
-    function setTopMenuVisible(visible as boolean)
-      m.log.info("setting side menu visible", visible)
-
-      if m.navMenu <> invalid
-        m.navMenu.visible = visible
-        m.dynamicContainer@.setNextView(visible ? m.navMenu: invalid)
-      end if
-    end function
-
-    public function setFocusOnContent(focusOnContent as boolean, animated = true as boolean)
-      m.isFocusedOnContent = focusOnContent
-      m.setFocus(focusOnContent ? m.tabController : m.navMenu)
-    end function
-
-    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    '++ Protected Methods
-    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
     protected override function initialize()
       super.initialize()
-
-      'TODO - this is going to be part of a launch sequence
-      playerController = m.createSGNode("VideoPlayerController", invalid, "videoPlayerController")
-      m.setInstance("videoPlayerController", playerController)
-
-      deviceUtil = new robot.lib.DeviceInfoUtil()
-      deviceInfo = deviceUtil.getDeviceInfo()
-
-      m.setInstance("deviceInfo", deviceInfo)
-
-      m.tabController = m.createSGNode("mv_TabController", m.top, "tabController")
-
-      m.configureNavMenu()
-      m.dynamicContainer = m.createSGNode("mv_DynamicContainer", m.top, "dynamicContainer")
-      m.setTopMenuVisible(false)
-
-      m.observe(m.navMenu.selectedIndex, m.onMenuItemChange)
-      m.setInstance("appController", m.top)
-
-      sharedDate = mc.createSGNode("robot_Date")
-      mc.setOrAddNodeField(m.global, "sharedDate", sharedDate)
-
-      m.selectionManager = new robot.lib.SelectionManager()
-      m.pages = m.createMenuPages()
     end function
 
     protected override function createMenuPages() as mc.types.array
       return [
         m.getDefaultPage()
         m.getPage0()
-        m.getPage2()
       ]
-    end function
-
-    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    '++ Private methods
-    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    private function onMenuItemChange(index as integer)
-      m.log.info("selected tab item", index)
-      m.currentMenuItem = m.navMenu@.getItems()[index]
-      m.tabController@.changeCurrentItem(m.currentMenuItem)
-      m.setFocus(m.tabController)
-    end function
-
-    private function configureNavMenu()
-      if m.navMenu = invalid
-        m.navMenu = m.createSGNode("SideMenu", m.top, "sideMenu", {
-          observe: {
-            "selectedIndex": m.onMenuItemChange
-          }
-        })
-      end if
-      m.navMenu.visible = false
-      items = m.styleManager@.getStyle("menu.items")
-      m.navMenu@.setItems(items)
-    end function
-
-    private function loadRemoteRobotJson()
-      m.setRobotJsonInstance()
-      loader = new robot.lib.RobotJsonLoader()
-      remoteLocation = m.getRobotJsonUrlFromRegistry("robotJsonUrl")
-      try
-        m.styleManager@.setStyleJson(invalid)
-        loader.loadRobotJson(true, remoteLocation)
-      catch error
-        dialogUtil = new mv.DialogUtil(m)
-        dialogUtil.showDialog(error.message, "", ["Close"], m.onCloseDialog)
-      end try
-
-    end function
-
-    private function setRobotJsonInstance()
-      robotJson = {
-        url: m.getRobotJsonUrlFromRegistry("robotJsonUrl")
-        isLoadingRobotJsonFromServer: false
-      }
-      mioc.setInstance("robotJson", robotJson)
-    end function
-
-    private function changeRobotJsonServerUrl()
-      keyboardDialogUtil = new mv.KeyboardDialogUtil(m)
-      robotJsonUrl = m.getRobotJsonUrlFromRegistry("robotJsonUrl")
-      keyboardDialogUtil.showKeyboardDialog("Enter the url address for robot json file", robotJsonUrl, m.onKeyboardTextEntered, false, ["Continue", "Clear", "Back"])
-    end function
-
-    private function getRobotJsonUrlFromRegistry(key as string)
-      registry = new mc.Registry()
-      url = registry.read("robotJson", key)
-      return asString(url)
-    end function
-
-    private function setRobotJsonUrlToRegistry(key as string, value as dynamic)
-      registry = new mc.Registry()
-      registry.write("robotJson", key, value)
-    end function
-
-    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    '++ Callbacks
-    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-    private function onKeyboardTextEntered(text as string)
-      m.log.info("Setting robot json url to", text)
-      m.setRobotJsonUrlToRegistry("robotJsonUrl", text)
-      mioc.setInstance("robotJsonUrl", text.toStr())
-    end function
-
-    private function onCloseDialog(index as integer, dialog as mc.types.node)
-      dialog.close = true
-      m.top.getParent().dialog = invalid
-      dialog = invalid
-      mv.setFocusLocked(invalid, "Close dialog was closed")
-      m.setFocus(m.top)
     end function
 
     '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     '++ Pages
     '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
     protected function getPage0()
       return [
-        ["Load json from server", function(): m.loadRemoteRobotJson(): end function]
-        ["Change robot json server address", function(): m.changeRobotJsonServerUrl(): end function]
-        ["Home Screen", function(): m.showScreen(m.createSGNode("HomeScreen")): end function]
-        ["Item Details Screen", function(): m.showScreen(m.createSGNode("ItemDetailsScreen")): end function]
-        ["Update List Data Screen", function(): m.showScreen(m.createSGNode("SpikeScreen")): end function]
-        ["Details Screen", function(): m.showScreen(m.createSGNode("DetailsScreen")): end function]
-        ["Search Screen", function(): m.showScreen(m.createSGNode("SearchScreen")): end function]
-        ["Store Screen", function(): m.showScreen(m.createSGNode("StoreScreen")): end function]
-
+        ["Disney Inspired Hero ", function(): m.showScreen(m.createSGNode("DisneyHeroScreen")): end function]
+        ["List OnEnterOnExit", function(): m.showScreen(m.createSGNode("ListEnterExitScreen")): end function]
+        ["List ", function(): m.showScreen(m.createSGNode("ListScreen")): end function]
+        ["List Editing (team screen)", function(): m.showScreen(m.createSGNode("TeamScreen")): end function]
+        ["Grid Item JumpToItem", function(): m.showScreen(m.createSGNode("FocusOnGridItemScreen")): end function]
+        ["Grid Item Moving", function(): m.showScreen(m.createSGNode("UpdateGridItemsScreen")): end function]
+        ["RowList", function(): m.showScreen(m.createSGNode("RowListScreen")): end function]
+        ["List Updates", function(): m.showScreen(m.createSGNode("UpdateListDataScreen")): end function]
       ]
     end function
 
-    protected function getPage2()
-      return [
-        ["Buttons", function(): m.showScreen(m.createSGNode("ButtonScreen")): end function]
-        ["TextInput", function(): m.showScreen(m.createSGNode("TextInputScreen")): end function]
-        ["Task Runner", function(): m.showScreen(m.createSGNode("TaskRunnerScreen")): end function]
-        ["Animations", function(): m.showScreen(m.createSGNode("AnimationScreen")): end function]
-        ["Advanced Animations", function(): m.showScreen(m.createSGNode("AdvancedAnimationExampleScreen")): end function],
-        ["Mask Group", function(): m.showScreen(m.createSGNode("MaskGroupExample")): end function]
-      ]
-    end function
 
     '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     '++ Key Presses
     '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
     private function isCapturingAnyKeyPress(key as string, press as boolean) as boolean
-      return true
-    end function
-
-    private function onKeyPressUp() as boolean
-      m.setFocusOnContent(false)
-      return true
-    end function
-
-    private function onKeyPressDown() as boolean
-      if not m.isFocusedOnContent
-        m.setFocusOnContent(true)
-      end if
-      return true
-    end function
-
-    private function onKeyPressRewind() as boolean
-      scene = m.top.getScene()
-      scene.wasDeveloperScreenShown = true
-      scene.restartApp = true
       return true
     end function
 

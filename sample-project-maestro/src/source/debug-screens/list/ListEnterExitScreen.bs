@@ -1,7 +1,7 @@
-import "pkg:/source/ml/ListMixin.bs"
-import "pkg:/source/view/BaseScreen.bs"
-import "pkg:/source/core/DebugTimer.bs"
-import "pkg:/source/ml/CommonListApi.bs"
+import "pkg:/source/sl/ListMixin.bs"
+import "pkg:/source/roku_modules/maestro/view/BaseScreen.brs"
+import "pkg:/source/roku_modules/maestro/core/DebugTimer.brs"
+import "pkg:/source/sl/CommonListApi.bs"
 
 @node("ListEnterExitScreen", "mv_BaseScreen")
 class ListEnterExitScreen extends mv.BaseScreen
@@ -60,7 +60,7 @@ class ListEnterExitScreen extends mv.BaseScreen
     translation = [0, 0]
     size = [1920, 1080]
 
-    m.bgRect = m.createSGNode("mv_Rectangle", m.top, "bgRect", {
+    m.bgRect = m.createSGNode("sv_Rectangle", m.top, "bgRect", {
       translation: translation
       size: size
       color: "#6a307d"
@@ -68,17 +68,17 @@ class ListEnterExitScreen extends mv.BaseScreen
     m.listHolder = m.createSGNode("Group", m.top, "listHolder")
     m.componentPool = m.global.componentPool
 
-    m.list = m.createSGNode("ml_List", m.listHolder, "list", {
+    m.list = m.createSGNode("sl_List", m.listHolder, "list", {
       translation: translation
       width: size[0]
       height: size[1]
     })
-    m.button = m.createSGNode("mv_Button", m.top, "button", {
+    m.button = m.createSGNode("sv_Button", m.top, "button", {
       text: "create list"
       autosize: true
     })
 
-    m.label = m.createSGNode("mv_Label", m.top, "label", {
+    m.label = m.createSGNode("sv_Label", m.top, "label", {
       translation: [500, 0]
       size: [1000, 50]
       fontKey: "mediumbold,30"
@@ -107,14 +107,14 @@ class ListEnterExitScreen extends mv.BaseScreen
 
   private function onResetChange()
     m.list@.setContent(invalid)
-    m.cellSettings = ml.listMixin.createCellSettings(m.defaultCellType, [400, 250], 30)
+    m.cellSettings = sl.listMixin.createCellSettings(m.defaultCellType, [400, 250], 30)
 
     ' timer = new mc.utils.DebugTimer("list")
 
-    m.focusSettings = ml.listMixin.createFocusSettings("fixed")
-    m.rowSettings = ml.listMixin.createRowSettings(m.cellSettings, m.focusSettings, 30)
-    headerSetings = ml.listMixin.createHeaderSettings()
-    listSettings = ml.listMixin.createListSettings()
+    m.focusSettings = sl.listMixin.createFocusSettings("fixed")
+    m.rowSettings = sl.listMixin.createRowSettings(m.cellSettings, m.focusSettings, 30)
+    headerSetings = sl.listMixin.createHeaderSettings()
+    listSettings = sl.listMixin.createListSettings()
     listSettings.sendScrollStartStop = false
     listSettings.sendScrollUpdate = false
     listSettings.rowCreationStrategy = "async"
@@ -127,7 +127,7 @@ class ListEnterExitScreen extends mv.BaseScreen
     listSettings.numberItemsToRenderAfter = m.numberItemsToRenderAfter
     listSettings.numberItemsToRenderBefore = m.numberItemsToRenderBefore
 
-    content = ml.listMixin.createListContent(m.focusSettings, m.rowSettings, listSettings)
+    content = sl.listMixin.createListContent(m.focusSettings, m.rowSettings, listSettings)
 
     m.observe(content.change, m.onContentChange)
     items = m.createGridData()
@@ -176,31 +176,31 @@ class ListEnterExitScreen extends mv.BaseScreen
 
     'TODO - add normal rows around this
     for i = 0 to m.numberOfRows - 1
-      row = createObject("roSGNode", "ml_RowContent")
+      row = createObject("roSGNode", "sl_RowContent")
       mc.setOrAddNodeField(row, "index", `${m.currentRowIndex}`)
       m.currentRowIndex++
       row.id = rnd(2147483647).toStr()
       if showHero and (i = 0 or i = 6 or i = 12 or i = 18 or i = 25 or i = 35 or i = 45)
-        row0FocusSettings = ml.listMixin.createFocusSettings("fixed", [0, 0, 0, 0])
+        row0FocusSettings = sl.listMixin.createFocusSettings("fixed", [0, 0, 0, 0])
         if i = 0
           row0FocusSettings.feedbackStyle = "none"
         end if
-        cellSettings = ml.listMixin.createCellSettings("HeroCellEfficient", [1100, 700], 30)
-        row.settings = ml.listMixin.createRowSettings(cellSettings, row0FocusSettings)
+        cellSettings = sl.listMixin.createCellSettings("HeroCellEfficient", [1100, 700], 30)
+        row.settings = sl.listMixin.createRowSettings(cellSettings, row0FocusSettings)
         row.settings.headerSettings.position = "none"
         row.settings.contentOffset = [400, -30]
         row.settings.screenPos = -1
       else if showComplex and (i = 1 or i = 8 or i = 14)
-        row.settings = ml.listMixin.createCustomRowSettings("ComplexRowEfficient", 700)
+        row.settings = sl.listMixin.createCustomRowSettings("ComplexRowEfficient", 700)
       else if showGrids and (i = 4 or i = 12) ' or i = 20 or i = 30 or i = 40 or i = 50)
-        gridFocusSettings = ml.listMixin.createFocusSettings("floating", [0, 0, 0, 0])
+        gridFocusSettings = sl.listMixin.createFocusSettings("floating", [0, 0, 0, 0])
         if i = -2
           numCols = 1
         else
           numCols = 3
         end if
 
-        row.settings = ml.listMixin.createGridRowSettings(m.cellSettings, gridFocusSettings, 30, invalid, 150, numCols, 250, 5, 50)
+        row.settings = sl.listMixin.createGridRowSettings(m.cellSettings, gridFocusSettings, 30, invalid, 150, numCols, 250, 5, 50)
         row.settings.contentOffset = [100, 30]
         ' row.settings.peekNextPixels = 300
         ' if i = 3
@@ -208,9 +208,9 @@ class ListEnterExitScreen extends mv.BaseScreen
         ' end if
 
       else if showNormal 'and (i = 2 or i = 3 or i = 20 or i = 30 or i = 40)
-        ' focusSettings = ml.listMixin.createFocusSettings("fixed", [0, 0, 0, 0])
-        focusSettings = ml.listMixin.createFocusSettings("floating", [0, 0, 0, 0])
-        row.settings = ml.listMixin.createRowSettings(m.cellSettings, focusSettings)
+        ' focusSettings = sl.listMixin.createFocusSettings("fixed", [0, 0, 0, 0])
+        focusSettings = sl.listMixin.createFocusSettings("floating", [0, 0, 0, 0])
+        row.settings = sl.listMixin.createRowSettings(m.cellSettings, focusSettings)
         ' row.settings.renderStrategy = "all"
         ' row.settings.renderStrategy = "all"
         row.settings.contentOffset = [100, 30]
@@ -295,12 +295,12 @@ class ListEnterExitScreen extends mv.BaseScreen
 
   private function addRow(rowOffset as integer)
     index = m.list.focusedRowIndex + rowOffset
-    rowFocusSettings = ml.listMixin.createFocusSettings("fixed", [0, 0, 0, 0])
-    row = createObject("roSGNode", "ml_RowContent")
+    rowFocusSettings = sl.listMixin.createFocusSettings("fixed", [0, 0, 0, 0])
+    row = createObject("roSGNode", "sl_RowContent")
     rowFocusSettings.feedbackColor = "#F4D42A"
-    headerSettings = ml.listMixin.createHeaderSettings([30, 20], 80, "mediumBold,50", "#ffff00")
-    cellSettings = ml.listMixin.createCellSettings(m.defaultCellType, [400, 250], 100)
-    row.settings = ml.listMixin.createRowSettings(cellSettings, rowFocusSettings, 30, headerSettings)
+    headerSettings = sl.listMixin.createHeaderSettings([30, 20], 80, "mediumBold,50", "#ffff00")
+    cellSettings = sl.listMixin.createCellSettings(m.defaultCellType, [400, 250], 100)
+    row.settings = sl.listMixin.createRowSettings(cellSettings, rowFocusSettings, 30, headerSettings)
     ' row.settings.contentOffset = [100, 0]
 
     row.title = "NEW ROW " + m.contentId.toStr()
@@ -450,7 +450,7 @@ class ListEnterExitScreen extends mv.BaseScreen
   '++ List Delegate Methods
   '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-  private function onRowData(event as ml.ListEvent)
+  private function onRowData(event as sl.ListEvent)
     m.log.info("received row data for index", event.rowIndex, event.data)
     m.log.info("updating data")
     item = m.list.content.getChild(event.rowIndex)
@@ -459,7 +459,7 @@ class ListEnterExitScreen extends mv.BaseScreen
     ' m.list@.synchronizeContent()
   end function
 
-  private function onRowDidGainFocus(event as ml.ListEvent)
+  private function onRowDidGainFocus(event as sl.ListEvent)
     ' ? "+SCREEN onRowDidGainFocus : R: "; event.rowIndex ; "SR: "; event.subRowIndex ; " D:" ; event.direction
 
     row = m.list@.getRowRenderer(event.rowIndex)
@@ -482,7 +482,7 @@ class ListEnterExitScreen extends mv.BaseScreen
     ' end if
   end function
 
-  private function onRowDidLoseFocus(event as ml.ListEvent)
+  private function onRowDidLoseFocus(event as sl.ListEvent)
     ' ? "+SCREEN onRowDidLoseFocus : R: "; event.rowIndex ; "SR: "; event.subRowIndex ; " D:" ; event.direction
 
     ' row = m.list@.getRowRenderer(event.rowIndex)
@@ -492,7 +492,7 @@ class ListEnterExitScreen extends mv.BaseScreen
 
   end function
 
-  private function onRowGainingFocus(event as ml.ListEvent)
+  private function onRowGainingFocus(event as sl.ListEvent)
     ' ? "+SCREEN onRowGainingFocus : R: "; event.rowIndex ; "SR: "; event.subRowIndex ; " D:" ; event.direction ; " F: " ; event.fraction
     ' if event.direction = -1
     '   row = m.list@.getRowRenderer(event.rowIndex)
@@ -500,7 +500,7 @@ class ListEnterExitScreen extends mv.BaseScreen
     ' end if
   end function
 
-  private function onRowLosingFocus(event as ml.ListEvent)
+  private function onRowLosingFocus(event as sl.ListEvent)
     ' ? "+SCREEN onRowLosingFocus : R: "; event.rowIndex ; "SR: "; event.subRowIndex ; " D:" ; event.direction ; " F: " ; event.fraction
     ' if event.direction = 1
     '   row = m.list@.getRowRenderer(event.rowIndex)
@@ -508,7 +508,7 @@ class ListEnterExitScreen extends mv.BaseScreen
     ' end if
   end function
 
-  private function onCellWillGainFocus(event as ml.ListEvent)
+  private function onCellWillGainFocus(event as sl.ListEvent)
     ' ? "+SCREEN onCellWillGainFocus : R: "; event.rowIndex ; " I: " ; event.cellIndex; " D:" ; event.direction
     mioc.setInstance("focusedIndex", {
       row: event.rowIndex
@@ -516,7 +516,7 @@ class ListEnterExitScreen extends mv.BaseScreen
     })
   end function
 
-  private function onCellDidGainFocus(event as ml.ListEvent)
+  private function onCellDidGainFocus(event as sl.ListEvent)
     ' ? "+SCREEN onCellDidGainFocus  : R: "; event.rowIndex ; " I: " ; event.cellIndex; " D:" ; event.direction
     mioc.setInstance("focusedIndex", {
       row: event.rowIndex
@@ -525,15 +525,15 @@ class ListEnterExitScreen extends mv.BaseScreen
   end function
 
 
-  private function onCellWillLoseFocus(event as ml.ListEvent)
+  private function onCellWillLoseFocus(event as sl.ListEvent)
     ' ? "+SCREEN onCellWillLoseFocus : R: "; event.rowIndex ; " I: " ; event.cellIndex; " D:" ; event.direction
   end function
 
-  private function onCellDidLoseFocus(event as ml.ListEvent)
+  private function onCellDidLoseFocus(event as sl.ListEvent)
     ' ? "+SCREEN onCellDidLoseFocus : R: "; event.rowIndex ; " I: " ; event.cellIndex; " D:" ; event.direction
   end function
 
-  private function onCellGainingFocus(event as ml.ListEvent)
+  private function onCellGainingFocus(event as sl.ListEvent)
     ' ? "+SCREEN onCellGainingFocus : R: "; event.rowIndex ; " C " ; event.cellIndex; " D:" ; event.direction ; " F: " ; event.fraction
     ' if event.direction = -1
     '   row = m.list@.getRowRenderer(event.rowIndex)
@@ -541,7 +541,7 @@ class ListEnterExitScreen extends mv.BaseScreen
     ' end if
   end function
 
-  private function onCellLosingFocus(event as ml.ListEvent)
+  private function onCellLosingFocus(event as sl.ListEvent)
     ' ? "+SCREEN onCellLosingFocus : R: "; event.rowIndex ; " D:" ; " C " ; event.cellIndex; event.direction ; " F: " ; event.fraction
     ' if event.direction = 1
     '   row = m.list@.getRowRenderer(event.rowIndex)
@@ -550,7 +550,7 @@ class ListEnterExitScreen extends mv.BaseScreen
 
   end function
 
-  private function onItemSelected(event as ml.ListEvent)
+  private function onItemSelected(event as sl.ListEvent)
     ? " SELECTED ITEM " event.rowIndex event.cellIndex
     m.doAction(0)
   end function

@@ -1,10 +1,10 @@
-import "pkg:/source/ml/ListMixin.bs"
-import "pkg:/source/ml/RowItemScroller.bs"
-import "pkg:/source/ml/RowItemViewManager.bs"
-import "pkg:/source/ml/BaseRow.bs"
+import "pkg:/source/sl/ListMixin.bs"
+import "pkg:/source/sl/RowItemScroller.bs"
+import "pkg:/source/sl/RowItemViewManager.bs"
+import "pkg:/source/sl/BaseRow.bs"
 
-@node("VideoRow", "ml_BaseRow")
-class VideoRow extends ml.BaseRow
+@node("VideoRow", "sl_BaseRow")
+class VideoRow extends sl.BaseRow
 
   '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   '++ Views
@@ -30,8 +30,8 @@ class VideoRow extends ml.BaseRow
     m.video.control = "play"
   end function
 
-  public override function getFocusIndicatorConfig(cellInfo as ml.CellInfo, direction as integer, isFloatingFocus as boolean, isFromListScroll = false as boolean) as ml.FocusIndicatorConfig
-    return ml.createFocusIndicatorConfig(m.top, invalid, direction)
+  public override function getFocusIndicatorConfig(cellInfo as sl.CellInfo, direction as integer, isFloatingFocus as boolean, isFromListScroll = false as boolean) as sl.FocusIndicatorConfig
+    return sl.createFocusIndicatorConfig(m.top, invalid, direction)
   end function
 
 end class

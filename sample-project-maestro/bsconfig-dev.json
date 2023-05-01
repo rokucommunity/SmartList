@@ -12,12 +12,10 @@
     { "src": "../src-dev/meta/**/*.*", "dest": "meta" },
     { "src": "../src-dev/source/**/*.*", "dest": "source" },
     { "src": "../src-dev/images/**/*.*", "dest": "images" },
+    { "src": "lib/source/**/*.*", "dest": "source" },
+    { "src": "lib/components/**/*.*", "dest": "components" },
+
     { "src": "../src-dev/components/**/*.*", "dest": "components" },
-    {
-      "src": "../roku-robot/src/source/robot/**/*.*",
-      "dest": "source/robot"
-    },
-    "!../roku-robot/src/source/robot/**/*.spec.bs",
     "!**/*.spec.bs"
   ],
   "plugins": [

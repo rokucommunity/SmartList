@@ -11,11 +11,8 @@
     "meta/**/*.*",
     { "src": "../src-prod/meta/**/*.*", "dest": "meta" },
     { "src": "../src-prod/*", "dest": "" },
-    {
-      "src": "../roku-robot/src/source/robot/**/*.*",
-      "dest": "source/robot"
-    },
-    "!../roku-robot/src/source/robot/**/*.spec.bs",
+    { "src": "lib/source/**/*.*", "dest": "source" },
+    { "src": "lib/components/**/*.*", "dest": "components" },
     "!**/*.spec.bs"
   ],
   "plugins": [

@@ -1,5 +1,5 @@
-import "pkg:/source/ml/ListMixin.bs"
-import "pkg:/source/view/BaseScreen.bs"
+import "pkg:/source/sl/ListMixin.bs"
+import "pkg:/source/roku_modules/maestro/view/BaseScreen.brs"
 
 @node("RowListScreen", "mv_BaseScreen")
 class RowListScreen extends mv.BaseScreen
@@ -29,21 +29,21 @@ class RowListScreen extends mv.BaseScreen
     translation = [0, 0]
     size = [1920, 1080]
 
-    m.bgRect = m.createSGNode("mv_Rectangle", m.top, "bgRect", {
+    m.bgRect = m.createSGNode("sv_Rectangle", m.top, "bgRect", {
       translation: translation
       size: size
       color: "#b286f0"
     })
     m.listHolder = m.createSGNode("Group", m.top, "listHolder")
 
-    m.list = m.createSGNode("mv_RowList", m.listHolder, "list", {
+    m.list = m.createSGNode("sv_RowList", m.listHolder, "list", {
       translation: translation
       itemSize: [1920, 300]
       itemComponentName: "RowListCell"
       rowItemSize: [480, 320]
       numRows: 4
     })
-    m.button = m.createSGNode("mv_Button", m.top, "button", {
+    m.button = m.createSGNode("sv_Button", m.top, "button", {
       text: "create list"
       autosize: true
     })

@@ -1,8 +1,8 @@
-import "pkg:/source/ml/cells/BaseCell.bs"
+import "pkg:/source/sl/cells/BaseCell.bs"
 
 namespace sample
-  @node("SimpleCell", "ml_BaseCell")
-  class SimpleCell extends ml.BaseCell
+  @node("SimpleCell", "sl_BaseCell")
+  class SimpleCell extends sl.BaseCell
 
     '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     '++ Views
@@ -30,8 +30,8 @@ namespace sample
     end function
 
     protected override function onContentChange(content as mc.types.node)
-      m.label.text = mc.getString(content, "json.title")
-      m.poster.uri = mc.getString(content, "json.posterUrl")
+      m.label.text = sc.getString(content, "json.title")
+      m.poster.uri = sc.getString(content, "json.posterUrl")
       m.label.visible = true
       m.setScale(1, false)
     end function
@@ -50,9 +50,9 @@ namespace sample
 
     private function setScale(fraction as float, isGaining as boolean) as void
       if isGaining
-        m.scale = mc.clamp((fraction + 0.8), 0.7, 1.0)
+        m.scale = sc.clamp((fraction + 0.8), 0.7, 1.0)
       else
-        m.scale = mc.clamp((1 - fraction) + 0.3, 0.7, 1.0)
+        m.scale = sc.clamp((1 - fraction) + 0.3, 0.7, 1.0)
       end if
 
       m.poster.scale = [m.scale, m.scale]
@@ -84,29 +84,29 @@ namespace sample
       m.label.visible = textVisible
     end function
 
-    private function onWillGainFocus(event as ml.ListEvent)
+    private function onWillGainFocus(event as sl.ListEvent)
     end function
 
-    private function onWillLoseFocus(event as ml.ListEvent)
+    private function onWillLoseFocus(event as sl.ListEvent)
       m.toggleHighlighted(false)
 
     end function
 
-    private function onDidGainFocus(event as ml.ListEvent)
+    private function onDidGainFocus(event as sl.ListEvent)
       m.setScale(1, true)
       m.toggleHighlighted(true)
     end function
 
-    private function onDidLoseFocus(event as ml.ListEvent)
+    private function onDidLoseFocus(event as sl.ListEvent)
       m.setScale(1, false)
       m.toggleHighlighted(false)
     end function
 
-    private function onGainingFocus(event as ml.ListEvent)
+    private function onGainingFocus(event as sl.ListEvent)
       m.setScale(event.fraction, true)
     end function
 
-    private function onLosingFocus(event as ml.ListEvent)
+    private function onLosingFocus(event as sl.ListEvent)
       m.setScale(event.fraction, false)
     end function
   end class

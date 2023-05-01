@@ -1,13 +1,13 @@
 import "pkg:/source/roku_modules/log/LogMixin.brs"
-import "pkg:/source/core/Utils.bs"
-import "pkg:/components/view/mixin/FocusMixin.bs"
-import "pkg:/source/view/Animation.bs"
-import "pkg:/source/view/NodeClass.bs"
+import "pkg:/source/roku_modules/maestro/core/Utils.brs"
+import "pkg:/components/sl/mixin/FocusMixin.brs"
+import "pkg:/source/lib/Animation.bs"
+import "pkg:/source/sl/NodeClass.brs"
 
-namespace mc.sample
+namespace sc.sample
 
   @node("MainScene", "Scene")
-  class MainScene extends mv.NodeClass
+  class MainScene extends sv.NodeClass
     '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     '++ Debug Fields
     '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -44,12 +44,12 @@ namespace mc.sample
     end function
 
     private function createView()
-      m.loadingBackground = m.createSGNode("mv_Rectangle", m.top, "loadingBackground", {
+      m.loadingBackground = m.createSGNode("sv_Rectangle", m.top, "loadingBackground", {
         color: "#000000"
         width: 1920
         height: 1080
       })
-      m.loadingPoster = m.createSGNode("mv_Poster", m.top, "loadingPoster", {
+      m.loadingPoster = m.createSGNode("sv_Poster", m.top, "loadingPoster", {
         uri: "pkg:/images/app/todo-$$RES$$.png"
         loadSync: true
         width: 1920
@@ -72,22 +72,22 @@ namespace mc.sample
       m.log = new log.Logger("MainScene")
       m.log.info("Configuring log")
       rLog.includeFilters = {
-        ' "mv_TabController": true
-        ' "mv_SimpleTransition": true
+        ' "sv_TabController": true
+        ' "sv_SimpleTransition": true
         ' "ButtonScreen": true
       }
       rLog.excludeFilters = {
-        "__ml_FocusIndicatorManager": true
+        "__sl_FocusIndicatorManager": true
         "FocusIndicatorManager": true
       }
       'bs:disable-next-line
       a = {
-        "ml_List": true
-        "ml_BaseRow": true
-        "ml_BaseCell": true
-        "ml_RowHeader": true
-        "ml_GridRow": true
-        "ml_HorizontalRow": true
+        "sl_List": true
+        "sl_BaseRow": true
+        "sl_BaseCell": true
+        "sl_RowHeader": true
+        "sl_GridRow": true
+        "sl_HorizontalRow": true
         "ItemViewManager": true
         "ListItemViewManager": true
         "RowItemViewManager": true
@@ -118,10 +118,10 @@ namespace mc.sample
 
     private function startLaunchSequence()
       m.log.info("starting launch sequence")
-      m.launchSequence = m.createTask("mc_LaunchSequence", invalid, m.onLaunchSequenceResult)
+      m.launchSequence = m.createTask("sc_LaunchSequence", invalid, m.onLaunchSequenceResult)
     end function
 
-    private function onLaunchSequenceResult(result as mc.Result)
+    private function onLaunchSequenceResult(result as sc.Result)
       if result.isOK
         m.log.info("launch sequence is complete - showing main screen")
         mioc.setInstance("appArgs", m.args)
@@ -133,13 +133,13 @@ namespace mc.sample
 
     private function showInitialScreen()
       m.log.info("show initial screen")
-      m.developerScreen = mc.createSGNode("DeveloperScreen", m.top, "developerScreen")
+      m.developerScreen = sc.createSGNode("DeveloperScreen", m.top, "developerScreen")
       if m.developerScreen <> invalid
         m.log.warn("Launching in dev mode!")
         m.observeNodeField(m.developerScreen, "state", m.onDeveloperScreenState)
         m.loadingIndicator.isActive = false
         m.top.appendChild(m.developerScreen)
-        mv.setFocus(m.developerScreen)
+        sv.setFocus(m.developerScreen)
       else
         m.showAppController()
       end if
@@ -177,15 +177,15 @@ namespace mc.sample
       m.global.addFields({ "appController": m.top._appController })
       m.loadingIndicator.isActive = false
       m.top._appController.opacity = 1
-      mv.animations.utils.fadeTo(m.loadingBackground, 0.3, 0)
-      mv.animations.utils.fadeTo(m.loadingPoster, 0.3, 0)
+      sv.animations.utils.fadeTo(m.loadingBackground, 0.3, 0)
+      sv.animations.utils.fadeTo(m.loadingPoster, 0.3, 0)
       m.waitAFrame(m.cleanUpLoadingViews, 0.5)
     end function
 
     private function cleanUpLoadingViews()
       m.top.removeChild(m.loadingBackground)
       m.top.removeChild(m.loadingPoster)
-      mv.setFocus(m.top._appController)
+      sv.setFocus(m.top._appController)
     end function
 
   end class

@@ -4,7 +4,7 @@
 '  * @description Mixin methods for managing focus
 '  */
 
-namespace mv
+namespace sv
   '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   '++ FOCUS
   '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -18,7 +18,7 @@ namespace mv
   '  * @param {global} - globalNode pointer to globalNode (i.e. m.global)
   '  */
   function initializeFocusManager(globalNode as mc.types.node, isLogging = false as boolean)
-    focusManager = createObject("roSGNode", "mv_FocusManager")
+    focusManager = createObject("roSGNode", "sv_FocusManager")
     globalNode.addFields({ "focusManager": focusManager })
     focusManager.isLogging = isLogging
   end function

@@ -1,0 +1,242 @@
+import "pkg:/source/roku_modules/log/LogMixin.brs"
+import "pkg:/source/core/Utils.bs"
+import "pkg:/source/view/NodeClass.bs"
+import "pkg:/components/view/mixin/FocusMixin.bs"
+
+namespace sv
+  ' /**
+  '  * @module BaseView
+  '  * @description Is the class counterpart to BaseView component
+  '  *              used for MVC style programming
+  '  */
+  class BaseView extends sv.NodeClass
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Protected Fields
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    @inject("styleManager")
+    protected styleManager
+
+    protected isFocused = false
+    protected isShown = false
+    protected isLongPressStarted = false
+    protected longPressKey = ""
+    protected longPressTimer
+    protected focusedControl = invalid
+
+    private vm = invalid
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Initialization
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    function new(name as string)
+      super(name)
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ View Helpers
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    protected function initializeView(view as mc.types.node, args = invalid as mc.types.array)
+      if view <> invalid
+        view@._initialize(args)
+      else
+        m.log.error("view is invalid!")
+      end if
+    end function
+
+    protected function setFocus(target as mc.types.node, forceSet = false as boolean)
+      m.focusedControl = target
+      'bs:disable-next-line
+      sv.setFocus(target, forceSet)
+    end function
+
+    protected function setFocusLocked(target as mc.types.node, message = "" as string)
+      if target <> invalid
+        m.focusedControl = target
+      end if
+      'bs:disable-next-line
+      sv.setFocusLocked(target, message)
+    end function
+
+    protected function setFocusUnlocked(reason = "" as string)
+      'bs:disable-next-line
+      sv.setFocusUnlocked(reason)
+    end function
+
+    protected function isControlFocused(control as mc.types.node)
+      return m.focusedControl <> invalid and control <> invalid and m.focusedControl.id = control.id
+    end function
+
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ key support
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    private lastPressTime = 0
+
+    private function onKeyEvent(key as string, press as boolean) as boolean
+      result = false
+      timeNow = UpTime(0)
+      ' ? "key " ; key ; " P " ; press ; " " ; abs(timeNow - m.lastPressTime)
+      ' if abs(timeNow - m.lastPressTime) < 0.35 and press
+      ' ? " skipping rapid key"
+      '   m.lastPressTime = timeNow
+      '   return true
+      ' end if
+      m.lastPressTime = timeNow
+      if m.longPressKey <> ""
+        wasStarted = m.isLongPressStarted
+        m.toggleLongPressTimer(0)
+        if not wasStarted and sc.isFunction(m[`onKeyPress${key}`])
+          result = m[`onKeyPress${key}`]()
+        end if
+        return true
+      end if
+
+      if press
+        'bs:disable-next-line
+        if sc.isFunction(m.isAnyKeyPressLocked) and m.isAnyKeyPressLocked(key)
+          return true
+        end if
+        'bs:disable-next-line
+        if sc.isFunction(m.getLongPressIntervalForKey)
+          'bs:disable-next-line
+          longPressInterval = m.getLongPressIntervalForKey(key)
+          if longPressInterval > 0
+            m.log.info("entering long press for key ", key)
+            m.longPressKey = key
+            m.toggleLongPressTimer(longPressInterval)
+            return true
+          end if
+        end if
+
+        if sc.isFunction(m[`onKeyPress${key}`])
+          result = m[`onKeyPress${key}`]()
+        end if
+
+      end if
+
+      if result = invalid
+        result = false
+      end if
+
+      'bs:disable-next-line
+      if result = false and sc.isFunction(m.isCapturingAnyKeyPress)
+        'bs:disable-next-line
+        result = m.isCapturingAnyKeyPress(key, press)
+      end if
+
+      if result = invalid
+        result = false
+      end if
+
+      return result
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ long press support
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    protected function toggleLongPressTimer(interval as float)
+      if interval > 0
+        if m.longPressTimer = invalid
+          m.longPressTimer = sc.private.getMaestroPooledComponent("Timer")
+        end if
+        m.longPressTimer.duration = interval
+        m.longPressTimer.repeat = true
+        m.observeNodeField(m.longPressTimer, "fire", m.onLongPressTimerFire, "none")
+        m.longPressTimer.control = "start"
+      else
+        if m.longPressTimer <> invalid
+          m.unobserveNodeField(m.longPressTimer, "fire", m.onLongPressTimerFire)
+          m.longPressTimer.control = "stop"
+          m.longPressTimer.repeat = false
+          sc.private.releaseMaestroPooledComponent(m.longPressTimer)
+          m.longPressTimer = invalid
+        end if
+
+        if m.longPressKey <> ""
+          m.log.info("finishing longPress on key ", m.longPressKey)
+          'bs:disable-next-line
+          if m.isLongPressStarted and sc.isFunction(m.onLongPressFinish)
+            'bs:disable-next-line
+            m.onLongPressFinish(m.longPressKey)
+          end if
+          m.longPressKey = ""
+          m.isLongPressStarted = false
+        end if
+      end if
+    end function
+
+    protected function onLongPressTimerFire()
+      if m.isLongPressStarted
+        'bs:disable-next-line
+        if sc.isFunction(m.onLongPressUpdate)
+          'bs:disable-next-line
+          if not m.onLongPressUpdate(m.longPressKey)
+            m.log.info("long press was cancelled by the onLongPressUpdate call")
+            if sc.isFunction(m.toggleLongPressTimer)
+              m.toggleLongPressTimer(0)
+            end if
+          else
+            'will keep ticking
+            ' m.toggleLongPressTimer(m.longPressInterval)
+          end if
+        end if
+      else
+        'bs:disable-next-line
+        if sc.isFunction(m.onLongPressStart) and not m.onLongPressStart(m.longPressKey)
+          m.log.info("long press was rejected by onLongPressStart call")
+          key = m.longPressKey
+          m.toggleLongPressTimer(0)
+          if sc.isFunction(m[`onKeyPress${key}`])
+            m[`onKeyPress${key}`]()
+          end if
+        else
+          m.log.info("long press is accepted : starting for key ", m.longPressKey)
+          m.isLongPressStarted = true
+          'will keep ticking
+          ' m.toggleLongPressTimer(m.longPressInterval)
+        end if
+      end if
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Lifecycle
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    protected function destroy()
+      m.log.method("destroy")
+      m.state = "destroyed"
+    end function
+
+    protected function onFirstShow()
+      m.isShown = true
+    end function
+
+    protected function onShow()
+      m.isShown = true
+    end function
+
+    protected function onHide()
+      m.isShown = false
+    end function
+
+    protected function onGainedFocus(isSelfFocused as boolean)
+      if isSelfFocused
+        m.isFocused = true
+        if m.focusedControl <> invalid
+          m.setFocus(m.focusedControl)
+        end if
+      end if
+    end function
+
+    protected function onLostFocus()
+      m.isFocused = false
+    end function
+
+  end class
+end namespace
