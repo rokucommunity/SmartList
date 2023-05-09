@@ -475,14 +475,14 @@ namespace sl
     private function canMoveFromKeyPress(key as string, isLongPress as boolean) as boolean
       direction = m.keyDirections[key]
 
-      ? " >>>>>>>>>>>>>>>>>>> CAN MOVE FROM " key " isFocusing " m.focusIndicatorManager.isFocusing
+      ' ? " >>>>>>>>>>>>>>>>>>> CAN MOVE FROM " key " isFocusing " m.focusIndicatorManager.isFocusing
       if m._isRenderingUpdate
         m.log.info("cannot interact with keys while rendering")
         return false
       end if
 
       if m.focusIndicatorManager.isFocusing
-        ? " IS ALRADY FOCUSING"
+        ' ? " IS ALREADY FOCUSING"
         'TODO - improve this
         m.log.info("ignoring press", key, "because the focus indiciator is moving")
         'Allow to keep moving in same direction
