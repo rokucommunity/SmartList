@@ -1,5 +1,6 @@
+'TODO - this is used by maestro transpiler
 'some types we need for node class fields until bs get's better support
-namespace mc.types
+namespace sc.types
   class Node
   end class
   class Array

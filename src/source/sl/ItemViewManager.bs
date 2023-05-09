@@ -9,7 +9,7 @@ namespace sl
 
     public screenRect = { translation: [0, 0], size: [1920, 1080] }
     public componentBufferMode = "none"
-    private componentPool as mc.types.node
+    private componentPool as sc.types.node
 
     'owning views
     'we wrap the container to make it very easy to reason about content offsets
@@ -18,9 +18,10 @@ namespace sl
     public delegate = invalid
     public contentGroup = invalid
     public cellInfos = []
-    private rowInfos as mc.types.array
+    private rowInfos as sc.types.array
     private renderersByContentId = {}
     private rendereredCellInfosByIndex = {}
+    private contentItems = []
 
 
     'tracking used for reusing cells during multi-render batches
@@ -58,7 +59,7 @@ namespace sl
     'bs:disable-next-line
     protected placeHolderCell = m.createSGNode("sl_BaseCell", invalid, "#_#phc")
 
-    function new(name as string, owner as mc.types.node, container as mc.types.node, componentPool as mc.types.node, axes as mc.types.array, minPos as integer, maxPos as integer)
+    function new(name as string, owner as sc.types.node, container as sc.types.node, componentPool as sc.types.node, axes as sc.types.array, minPos as integer, maxPos as integer)
       super(name)
       m.container = container
       m.contentGroup = container.getParent()
@@ -83,6 +84,7 @@ namespace sl
       m.log.info ("resetting itemViewManager", m.__classname)
 
       m.content = invalid
+      m.contentItems = []
       m.rects = []
       m.settings = invalid
 
@@ -104,9 +106,10 @@ namespace sl
       m._updateLayout(fullUpdate)
     end function
 
-    function setContent(content as mc.types.node)
+    function setContent(content as sc.types.node)
       m.log.verbose("setContent")
       m.content = content
+      m.contentItems = m.getContentItems(content)
       m.settings = sl.listMixin.getRowSettings(m.owner.content, m.content)
       m.listSettings = m.owner.content.listSettings
 
@@ -124,7 +127,20 @@ namespace sl
       end if
     end function
 
-    function _createRenderers(content as mc.types.node) as boolean
+    protected function getContentItems(content as mc.types.node)
+
+      if content <> invalid
+        'bs:disable-next-line
+        if content.isSubType("mc_Node") or content.subType() = "mc_Node"
+          return content@.getChildren()
+        else
+          return content.getChildren(-1, 0)
+        end if
+      end if
+      return []
+    end function
+
+    function _createRenderers(content as sc.types.node) as boolean
       m.visibleItems = []
 
       return m.createRenderers(content)
@@ -153,11 +169,11 @@ namespace sl
     '++ util
     '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-    function convertChildTranslationToOwner(containerTranslation as mc.types.array)
+    function convertChildTranslationToOwner(containerTranslation as sc.types.array)
       return [m.container.translation[0] + containerTranslation[0], m.container.translation[1] + containerTranslation[1]]
     end function
 
-    function convertOwnerTranslationToChild(ownerTranslation as mc.types.array)
+    function convertOwnerTranslationToChild(ownerTranslation as sc.types.array)
       return [m.container.translation[0] - ownerTranslation[0], m.container.translation[1] - ownerTranslation[1]]
     end function
 
@@ -228,7 +244,7 @@ namespace sl
     end function
 
     'FIXME - this is expensive
-    function getCellInfoForContent(content as mc.types.node) as sl.CellInfo
+    function getCellInfoForContent(content as sc.types.node) as sl.CellInfo
       info = invalid
       if content <> invalid and m.cellInfos <> invalid
         ' ? "getCellInfoForContentIndex" ; contentIndex
@@ -303,7 +319,7 @@ namespace sl
 
     function getCell(index as integer)
       cell = invalid
-      item = m.content.getChild(index)
+      item = m.contentItems[index]
 
       ' ? "getCell" index
       if item <> invalid
@@ -319,7 +335,7 @@ namespace sl
       return cell
     end function
 
-    protected function updateCell(cell as mc.types.node, index as integer, item as mc.types.node)
+    protected function updateCell(cell as sc.types.node, index as integer, item as sc.types.node)
       if cell <> invalid
         ' ? " updating rendered cell IDX" cell.index " CT " asString(item.title) " index " index " ID " asString(item.id)
         m.previousRendereredByContentId.delete(item.id)
@@ -357,7 +373,7 @@ namespace sl
       end if
     end function
 
-    protected function getCellForCreation(item as mc.types.node, index as integer, compName as string, isRendered as boolean, force as boolean)
+    protected function getCellForCreation(item as sc.types.node, index as integer, compName as string, isRendered as boolean, force as boolean)
       ' ? " GETTING CELL FOR CREATION "; index; " isRendered "; isRendered
       ' if not isRendered and not force'index > 10 and not force
       ' if false and not isRendered and not force'index > 10 and not force
@@ -391,7 +407,7 @@ namespace sl
       end if
     end function
 
-    function releaseCell(cell as mc.types.node)
+    function releaseCell(cell as sc.types.node)
       m.log.verbose("releasing cell")
 
       if cell <> invalid and cell.id <> "#_#phc"
@@ -413,7 +429,7 @@ namespace sl
       end if
     end function
 
-    function cleanupCell(cell as mc.types.node)
+    function cleanupCell(cell as sc.types.node)
       if cell <> invalid and cell.id <> "#_#phc"
         m.log.verbose("releasing cell at index ", cell.index)
         m.componentPool@.releaseComponent(cell)
@@ -424,7 +440,7 @@ namespace sl
       end if
     end function
 
-    function notifyExitEvent(indexes as mc.types.array) as void
+    function notifyExitEvent(indexes as sc.types.array) as void
       m.log.verbose("notifyExitEvent", m.__classname, indexes)
 
       for each index in indexes
@@ -442,7 +458,7 @@ namespace sl
       m.itemScroller.viewPortEventNotifier.isAllRendered = false
     end function
 
-    function notifyEnterEvent(indexes as mc.types.array) as void
+    function notifyEnterEvent(indexes as sc.types.array) as void
       m.log.verbose("notifyEnterEvent", m.__classname, indexes)
 
       for each index in indexes
@@ -515,7 +531,7 @@ namespace sl
     '++ general item api
     '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-    function getRect(index as integer, useScreenCoords = false as boolean) as mc.types.assocarray
+    function getRect(index as integer, useScreenCoords = false as boolean) as sc.types.assocarray
       rect = m.rects[index]
 
       if rect <> invalid
@@ -553,7 +569,7 @@ namespace sl
       return m.settings
     end function
 
-    function getItemSize(index as integer) as mc.types.array
+    function getItemSize(index as integer) as sc.types.array
       itemRect = m.rects[index]
       if itemRect <> invalid
         return itemRect.size
@@ -602,7 +618,7 @@ namespace sl
       return true
     end function
 
-    function createRenderers(content as mc.types.node, forceSync = false as boolean) as boolean
+    function createRenderers(content as sc.types.node, forceSync = false as boolean) as boolean
       m.log.error("You must override this method")
       return false
     end function
@@ -611,14 +627,14 @@ namespace sl
       m.log.error("You must override this method")
     end function
 
-    function applyRenderStateMap(renderedStateMap as mc.types.assocarray)
+    function applyRenderStateMap(renderedStateMap as sc.types.assocarray)
       m.log.error("You must override this method")
     end function
 
     function getRenderer(index as integer, createIfNotReady = false as boolean, forceCellUpdate = false as boolean)
       ' ? " GR ";
-      if m.content <> invalid and m.cellInfos <> invalid
-        item = m.content.getChild(index)
+      if m.contentItems <> invalid and m.cellInfos <> invalid
+        item = m.contentItems[index]
         ' ? " A";
         if item <> invalid
           cell = m.renderersByContentId[item.id]
@@ -654,7 +670,7 @@ namespace sl
       }
     end function
 
-    function getRowInfos(yOffset as integer, forceRecalculate = false as boolean) as mc.types.array
+    function getRowInfos(yOffset as integer, forceRecalculate = false as boolean) as sc.types.array
       if forceRecalculate
         m.rowInfos = invalid
       end if

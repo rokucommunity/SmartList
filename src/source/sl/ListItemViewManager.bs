@@ -5,7 +5,7 @@ import "pkg:/source/sl/ListContentManager.bs"
 namespace sl
   class ListItemViewManager extends sl.ItemViewManager
 
-    private batchTimer as mc.types.node
+    private batchTimer as sc.types.node
     private visibleComponents = []
 
     private isUpdating = false
@@ -43,7 +43,7 @@ namespace sl
     private batchSize = 3
     private batchDelay = 3
 
-    function new(list as mc.types.node, container as mc.types.node, minPos as integer, maxPos as integer, componentPool as mc.types.node)
+    function new(list as sc.types.node, container as sc.types.node, minPos as integer, maxPos as integer, componentPool as sc.types.node)
       super("ListItemViewManager", list, container, componentPool, 1, minPos, maxPos)
     end function
 
@@ -65,7 +65,7 @@ namespace sl
       m.cancelWaitTimer(m.batchTimer)
     end function
 
-    override function createRenderers(content as mc.types.node, forceSync = false as boolean) as boolean
+    override function createRenderers(content as sc.types.node, forceSync = false as boolean) as boolean
 
       m.owner._isRenderingUpdate = true
       m.log.verbose(">>> LIST CREATE RENDERERS _isRenderingUpdate", sc.dv(m.owner), m.owner._isRenderingUpdate)
@@ -89,7 +89,7 @@ namespace sl
           m.batchTimer = m.setTimeout(m.createRendererBatch, 0.15)
         else
           m.log.verbose("creating renderers in sync mode")
-          m.batchSize = m.content.getChildCount()
+          m.batchSize = m.contentItems.count()
           isReady = true
           m.createRendererBatch()
         end if
@@ -109,7 +109,7 @@ namespace sl
       m.log.info("Renderers created on list")
 
       if m.content <> invalid
-        m.log.verbose("BATCHING: completed", m.content.getChildCount(), "rows")
+        m.log.verbose("BATCHING: completed", m.contentItems.count(), "rows")
       else
         m.log.verbose("BATCHING: completed. no rows")
       end if
@@ -134,14 +134,14 @@ namespace sl
           'm.log.increaseIndent()Indent("BEGIN CREATE ROW" + i.toStr())
           m.creationIndex++
           index = m.creationIndex
-          if m.creationIndex >= m.content.getChildCount()
+          if m.creationIndex >= m.contentItems.count()
             m.log.verbose("finished creating all renderers")
 
             m.onRenderersCreated()
             'm.log.decreaseIndent()
             return
           end if
-          rowContent = m.content.getChild(index)
+          rowContent = m.contentItems[index]
           settings = sl.listMixin.getRowSettings(m.content, rowContent)
           rect = m.rects[index]
 
@@ -178,8 +178,8 @@ namespace sl
           m.visibleComponents.push(comp)
           index++
         end for
-        if m.creationIndex < m.content.getChildCount()
-          m.log.verbose("BATCHING: progress: ", m.creationIndex, "of", m.content.getChildCount(), "rows")
+        if m.creationIndex < m.contentItems.count()
+          m.log.verbose("BATCHING: progress: ", m.creationIndex, "of", m.contentItems.count(), "rows")
 
           m.setTimeout(m.createRendererBatch, 0.15)
         end if
@@ -187,7 +187,7 @@ namespace sl
       'm.log.decreaseIndent()
     end function
 
-    function createRow(rowContent as mc.types.node, index as integer, settings as mc.types.node, rect as mc.types.assocarray)
+    function createRow(rowContent as sc.types.node, index as integer, settings as sc.types.node, rect as sc.types.assocarray)
       compName = settings.componentName <> invalid ? settings.componentName : "sl_HorizontalRow"
       'm.log.increaseIndent()Indent("CREATE ROW " + index.toStr() + " " + compName)
       'TODO - measure height to ascertain how many
@@ -294,8 +294,8 @@ namespace sl
       end if
 
       'm.log.increaseIndent()Indent()
-      for i = 0 to m.content.getChildCount() - 1
-        item = m.content.getChild(i)
+      for i = 0 to m.contentItems.count() - 1
+        item = m.contentItems[i]
         settings = sl.listMixin.getRowSettings(m.content, item)
         visible = item.isHidden <> true and (not settings.isHiddenWhenEmpty or item.count() > 0)
         m.log.verbose(i, sc.dv(item), " VISIBLE ", visible, " L ", item.count(), " isHidden ", item.isHidden)
@@ -358,7 +358,7 @@ namespace sl
     end function
 
     ' @params{sl_RowSettings} settings for the current row
-    private function calculateRowHeight(settings as mc.types.node) as integer
+    private function calculateRowHeight(settings as sc.types.node) as integer
       height = 300
       if settings = invalid
         return height
@@ -376,7 +376,7 @@ namespace sl
       return height
     end function
 
-    private function calculateGridRowHeight(row as mc.types.node, settings as mc.types.node) as integer
+    private function calculateGridRowHeight(row as sc.types.node, settings as sc.types.node) as integer
       numItems = row.count()
       numCols = settings.numColumns
       numCols = numCols < 1 ? 1 : numCols

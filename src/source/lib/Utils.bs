@@ -88,7 +88,7 @@ namespace sc
   '  * @param {Any} p3 param 3, can leave blank to skip
   '  * @returns {any} whatever the func returns, or invald if not found
   '  */
-  function callAAFunc(target as mc.types.node, funcName as string, p1 = "#M_NONE#" as dynamic, p2 = "#M_NONE#" as dynamic, p3 = "#M_NONE#" as dynamic) as dynamic
+  function callAAFunc(target as sc.types.node, funcName as string, p1 = "#M_NONE#" as dynamic, p2 = "#M_NONE#" as dynamic, p3 = "#M_NONE#" as dynamic) as dynamic
 
     if target <> invalid
       if sc.isFunction(target[funcName])
@@ -111,7 +111,7 @@ namespace sc
     return invalid
   end function
 
-  function apply(func as dynamic, args = [] as mc.types.array, target = invalid as mc.types.assocarray, warnIfNoFunction = true as boolean) as dynamic
+  function apply(func as dynamic, args = [] as sc.types.array, target = invalid as sc.types.assocarray, warnIfNoFunction = true as boolean) as dynamic
     if not sc.isArray(args)
       m.log.error("apply expects an array of args")
       return invalid
@@ -182,7 +182,7 @@ namespace sc
     return invalid
   end function
 
-  function removeDuplicateKeys(aa = invalid as mc.types.assocarray, otherAA = invalid as mc.types.assocarray)
+  function removeDuplicateKeys(aa = invalid as sc.types.assocarray, otherAA = invalid as sc.types.assocarray)
     if otherAA <> invalid and aa <> invalid
 
       for each key in otherAA
@@ -328,7 +328,7 @@ namespace sc
     return sc.getPath(content, path, default, disableIndexing)
   end function
 
-  function append(source as mc.types.assocarray, other as mc.types.assocarray)
+  function append(source as sc.types.assocarray, other as sc.types.assocarray)
     if sc.isAACompatible(source) and sc.isAACompatible(other)
       source.append(other)
     end if
@@ -404,13 +404,13 @@ namespace sc
     end if
   end function
 
-  function createPath(path as string, value = invalid as dynamic, insertAAsForMissingValues = true as boolean) as mc.types.assocarray
+  function createPath(path as string, value = invalid as dynamic, insertAAsForMissingValues = true as boolean) as sc.types.assocarray
     content = {}
     sc.setPath(content, path, value)
     return content
   end function
 
-  function setOrAddNodeField(node as mc.types.node, field as string, value = invalid as dynamic)
+  function setOrAddNodeField(node as sc.types.node, field as string, value = invalid as dynamic)
     if type(node) = "roSGNode"
       if node.doesExist(field)
         node[field] = value
@@ -426,7 +426,7 @@ namespace sc
     end if
   end function
 
-  function setNodeAAValue(node as mc.types.node, field as string, key as string, value = invalid as dynamic)
+  function setNodeAAValue(node as sc.types.node, field as string, key as string, value = invalid as dynamic)
     v = node[field]
     if v = invalid
       v = {}
@@ -435,7 +435,7 @@ namespace sc
     sc.setOrAddNodeField(node, field, v)
   end function
 
-  function setNodeArrayValue(node as mc.types.node, field as string, index as integer, value = invalid as dynamic)
+  function setNodeArrayValue(node as sc.types.node, field as string, index as integer, value = invalid as dynamic)
     v = node[field]
     if v = invalid
       v = []
@@ -444,13 +444,13 @@ namespace sc
     sc.setOrAddNodeField(node, field, v)
   end function
 
-  function setOrAddNodeFields(node as mc.types.node, fields as mc.types.array)
+  function setOrAddNodeFields(node as sc.types.node, fields as sc.types.array)
     for each field in fields
       sc.setOrAddNodeField(node, field, fields[field])
     end for
   end function
 
-  function getChildAtDepth(node as mc.types.node, depth as integer) as dynamic
+  function getChildAtDepth(node as sc.types.node, depth as integer) as dynamic
     currentDepth = 0
 
     while node <> invalid and currentDepth < depth
@@ -486,7 +486,7 @@ namespace sc
     return a&
   end function
 
-  function getIndexOfItem(parent as mc.types.node, item as mc.types.node) as integer
+  function getIndexOfItem(parent as sc.types.node, item as sc.types.node) as integer
     if item <> invalid
       for index = 0 to parent.getChildCount() - 1
         node = parent.getChild(index)
@@ -502,7 +502,7 @@ namespace sc
   ' @param {node} parent - parent to append created node to
   ' @param {string} id - id of new node
   ' @param {assocarray|array of assocarray} args - if assocarray, fields that are applied to the node on creation, if array of assoarray, will iterate over the fields applying them all
-  function createSGNode(nodeType as string, parent = invalid as mc.types.node, id = invalid as string, args = invalid as mc.types.assocarray, isCallingInitialize = true as boolean, mTarget = invalid as mc.types.assocarray) as mc.types.node
+  function createSGNode(nodeType as string, parent = invalid as sc.types.node, id = invalid as string, args = invalid as sc.types.assocarray, isCallingInitialize = true as boolean, mTarget = invalid as sc.types.assocarray) as sc.types.node
     if parent <> invalid
       if type(parent) = "roSGNode" or parent.createChild <> invalid 'allows for mock nodes
         node = parent.createChild(nodeType)
@@ -570,7 +570,7 @@ namespace sc
     return node
   end function
 
-  function createNode(nodeType as string) as mc.types.node
+  function createNode(nodeType as string) as sc.types.node
     node = createObject(nodeType)
     return node
   end function
@@ -634,11 +634,11 @@ namespace sc
     return m.global
   end function
 
-  function getTop() as mc.types.node
+  function getTop() as sc.types.node
     return m.top
   end function
 
-  function getScene() as mc.types.node
+  function getScene() as sc.types.node
     return m.top.getScene()
   end function
 
@@ -646,7 +646,7 @@ namespace sc
   '++ mis utils
   '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-  function interpolateArray(a as mc.types.array, b as mc.types.array, fraction as float) as mc.types.array
+  function interpolateArray(a as sc.types.array, b as sc.types.array, fraction as float) as sc.types.array
     if a <> invalid and b <> invalid
       return [a[0] + (b[0] - a[0]) * fraction, a[1] + (b[1] - a[1]) * fraction]
     else
@@ -703,7 +703,7 @@ namespace sc.private
     end if
   end function
 
-  function getDebugMObject(node as mc.types.assocarray)
+  function getDebugMObject(node as sc.types.assocarray)
     mObject = {}
     for each field in node.items()
       if not sc.isFunction(field.value)

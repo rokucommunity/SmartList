@@ -1,7 +1,7 @@
 import "pkg:/source/lib/Utils.bs"
 
 namespace sv
-  function findNodes(nodeIds as mc.types.array) as void
+  function findNodes(nodeIds as sc.types.array) as void
     if type(nodeIds) = "roArray"
       for each nodeId in nodeIds
         node = m.top.findNode(nodeId)
@@ -14,7 +14,7 @@ namespace sv
     end if
   end function
 
-  function getFirstParentWithType(node as mc.types.node, parentType as string) as mc.types.node
+  function getFirstParentWithType(node as sc.types.node, parentType as string) as sc.types.node
     currentNode = node
 
     while currentNode <> invalid
@@ -28,7 +28,7 @@ namespace sv
     return invalid
   end function
 
-  function getFieldInParent(content as mc.types.node, fieldName as string, maxIterations = 3 as integer, defaultValue = {} as dynamic) as dynamic
+  function getFieldInParent(content as sc.types.node, fieldName as string, maxIterations = 3 as integer, defaultValue = {} as dynamic) as dynamic
     currentNode = content
     value = invalid
 
@@ -45,7 +45,7 @@ namespace sv
     return defaultValue
   end function
 
-  function destroyView(view as mc.types.node)
+  function destroyView(view as sc.types.node)
     p = view.getParent()
 
     if p <> invalid
@@ -53,7 +53,7 @@ namespace sv
     end if
   end function
 
-  function createViewsFromStyleJson(childrenJson as mc.types.array, targetNode = invalid as mc.types.node, assignViewsToM = true as boolean, mTarget = invalid as mc.types.assocarray, updateDataMappedIds = false as boolean)
+  function createViewsFromStyleJson(childrenJson as sc.types.array, targetNode = invalid as sc.types.node, assignViewsToM = true as boolean, mTarget = invalid as sc.types.assocarray, updateDataMappedIds = false as boolean)
     if mTarget = invalid
       mTarget = m
     end if
@@ -125,7 +125,7 @@ namespace sv
   ' @param {assocarray|array} json - json to apply - either an array of views to update, or a nested json structure, as used in createViewsFromStyleJson
   ' in which case all the
   ' @param {assocarray} mTarget - the m to look up field names on
-  function updateViewsWithStyleJson(json as dynamic, mTarget = invalid as mc.types.assocarray, isChild = false as boolean)
+  function updateViewsWithStyleJson(json as dynamic, mTarget = invalid as sc.types.assocarray, isChild = false as boolean)
     if mTarget = invalid
       mTarget = m
     end if
@@ -214,7 +214,7 @@ namespace sv
   ' given json of the form of createViewsFromStyleJson, will return a json blob
   ' describing the current values of the fields that are stored
   ' this is used to generate animation keys, and for other framework purposes
-  function getCurrentValuesWithStyleJson(json as dynamic, mTarget = invalid as mc.types.assocarray, nodes = {} as mc.types.assocarray) as dynamic
+  function getCurrentValuesWithStyleJson(json as dynamic, mTarget = invalid as sc.types.assocarray, nodes = {} as sc.types.assocarray) as dynamic
     if mTarget = invalid
       mTarget = m
     end if
@@ -251,7 +251,7 @@ namespace sv
   ' given json of the form of createViewsFromStyleJson, will return a json blob
   ' describing the current values of the fields that are stored
   ' this is used to generate animation keys, and for other framework purposes
-  function getRootValuesWithStyleJson(sourceJson as dynamic, targetJson as dynamic, nodes = {} as mc.types.assocarray) as dynamic
+  function getRootValuesWithStyleJson(sourceJson as dynamic, targetJson as dynamic, nodes = {} as sc.types.assocarray) as dynamic
 
     sourceMap = sv.getMapFromStyleJson(sourceJson)
     targetMap = sv.getMapFromStyleJson(targetJson)
@@ -271,7 +271,7 @@ namespace sv
   end function
 
   ' returns a flat map from a styles json structure
-  function getMapFromStyleJson(json as dynamic, nodes = {} as mc.types.assocarray) as dynamic
+  function getMapFromStyleJson(json as dynamic, nodes = {} as sc.types.assocarray) as dynamic
 
     if sc.isArray(json)
       for each childtargetJson in json
@@ -297,7 +297,7 @@ namespace sv
     return nodes
   end function
 
-  function getIdsFromStyleJson(childrenJson as mc.types.array, ids = [] as mc.types.array) as mc.types.array
+  function getIdsFromStyleJson(childrenJson as sc.types.array, ids = [] as sc.types.array) as sc.types.array
     for i = 0 to childrenJson.count() - 1
       nodeJson = childrenJson[i]
       id = nodeJson.id
@@ -314,7 +314,7 @@ namespace sv
 
   ' params {node} control
   ' params {node|assocarray|invalid} datasource
-  function applyDataMap(control as mc.types.node, dataSource = invalid as dynamic)
+  function applyDataMap(control as sc.types.node, dataSource = invalid as dynamic)
     dataMaps = sc.getAA(control, "_dataMap")
     for each field in dataMaps
       dataMap = dataMaps[field]

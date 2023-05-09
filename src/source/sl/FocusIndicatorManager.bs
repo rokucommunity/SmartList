@@ -14,7 +14,7 @@ namespace sl
     @alwaysnotify
     @observer("onIsHiddenChange")
     public isHidden = true
-    public list as mc.types.node
+    public list as sc.types.node
     public isFocusing = false
     public _isContentUpdating = false
 
@@ -29,7 +29,7 @@ namespace sl
 
     public focusedFraction = 0.0
 
-    private nextFocusIndex as mc.types.array
+    private nextFocusIndex as sc.types.array
 
     '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     '++ Internal event tracking
@@ -43,17 +43,17 @@ namespace sl
     '++ Views
     '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-    private focusPoint as mc.types.node
-    private focusIndicator as mc.types.node
-    private activeFocusView as mc.types.node
-    private nextFocusView as mc.types.node
+    private focusPoint as sc.types.node
+    private focusIndicator as sc.types.node
+    private activeFocusView as sc.types.node
+    private nextFocusView as sc.types.node
 
     '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     '++ Animations
     '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
     private focusPointAnim
-    private _list as mc.types.node
+    private _list as sc.types.node
 
     '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     '++ State
@@ -63,12 +63,12 @@ namespace sl
     private isIndicatorOnTop = true
     private direction = 0
 
-    private flowFocusDelegate as mc.types.node
+    private flowFocusDelegate as sc.types.node
 
     private nextConfig as object
 
-    private nextFocusSettings as mc.types.node
-    private previousFocusSettings as mc.types.node
+    private nextFocusSettings as sc.types.node
+    private previousFocusSettings as sc.types.node
     private previousSize = [0, 0]
     private previousTranslation = [0, 0]
     private rowHasIndicator = true
@@ -100,22 +100,22 @@ namespace sl
 
     private function createViews()
       'TODO - might still end up needing this... depends on how floating focus lands
-      m.focusIndicator = m.createSGNode("sv_Poster", m.top, `focusIndicator_${rnd(10000)}`, {
+      m.focusIndicator = m.createSGNode("mv_Poster", m.top, `focusIndicator_${rnd(10000)}`, {
         blendColor: "#ffffff"
         uri: "pkg:/images/input-focusrect.9.png"
         visible: false
       })
-      m.focusPoint = m.createSGNode("sv_Rectangle", m.top, "focusPoint", {
+      m.focusPoint = m.createSGNode("mv_Rectangle", m.top, "focusPoint", {
         color: "#ff0000"
         size: [20, 20]
         visible: false
       })
-      m.activeFocusView = m.createSGNode("sv_Rectangle", m.top, "activeFocusView", {
+      m.activeFocusView = m.createSGNode("mv_Rectangle", m.top, "activeFocusView", {
         color: "#00ff00"
         size: [20, 20]
         visible: false
       })
-      m.nextFocusView = m.createSGNode("sv_Rectangle", m.top, "nextFocusView", {
+      m.nextFocusView = m.createSGNode("mv_Rectangle", m.top, "nextFocusView", {
         color: "#ff0000"
         size: [20, 20]
         visible: false
@@ -211,11 +211,11 @@ namespace sl
       m.itemFocusManager.reset()
     end function
 
-    function sendManualDelegateRowMessage(method as string, event as mc.types.assocarray)
+    function sendManualDelegateRowMessage(method as string, event as sc.types.assocarray)
       m.itemFocusManager.delegateManager.callRowDelegateMethodOnList(method, event)
     end function
 
-    function sendManualDelegateCellMessage(method as string, event as mc.types.assocarray)
+    function sendManualDelegateCellMessage(method as string, event as sc.types.assocarray)
       m.itemFocusManager.delegateManager.callCellDelegateMethodOnList(method, event)
     end function
 
@@ -348,7 +348,7 @@ namespace sl
       return m.nextConfig
     end function
 
-    private function setActiveFocusSettings(newSettings as mc.types.node)
+    private function setActiveFocusSettings(newSettings as sc.types.node)
       m.previousFocusSettings = m.nextFocusSettings
       m.nextFocusSettings = newSettings
       m.previousSize = m.focusIndicator.size
@@ -446,7 +446,7 @@ namespace sl
     '++ Flow Focus Support
     '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-    public function startFlowFocus(focusIndicatorConfig as sl.FocusIndicatorConfig, speed as float, delegate as mc.types.node) as void
+    public function startFlowFocus(focusIndicatorConfig as sl.FocusIndicatorConfig, speed as float, delegate as sc.types.node) as void
 
       if not m.isActive()
         return

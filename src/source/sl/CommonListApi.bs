@@ -19,12 +19,12 @@ namespace sl
     subRowIndex as integer
     indicatorTranslation as integer
     indicatorSize as integer
-    settings as mc.types.node
+    settings as sc.types.node
     isHidden as integer
     isFloating as integer
     direction as integer
-    cell as mc.types.node
-    row as mc.types.node
+    cell as sc.types.node
+    row as sc.types.node
     willDoSystemFocus as boolean
     isRowEvent as boolean
   end interface
@@ -34,6 +34,6 @@ namespace sl
     version as integer
     isHidden as boolean
     isFocusEnabled as boolean
-    row as mc.types.node
+    row as sc.types.node
   end interface
 end namespace

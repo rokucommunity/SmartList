@@ -1,0 +1,37 @@
+import "pkg:/source/sl/ListMixin.bs"
+import "pkg:/source/sl/RowItemScroller.bs"
+import "pkg:/source/sl/RowItemViewManager.bs"
+import "pkg:/source/sl/BaseRow.bs"
+
+@node("VideoRow", "sl_BaseRow")
+class VideoRow extends sl.BaseRow
+
+  '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  '++ Views
+  '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+  private video
+
+  '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  '++ Overridden Methods
+  '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+  protected override function createViews()
+    bundle = m.global.styleManager@.loadBundle("pkg:/source/rows/VideoRow.bundle")
+    m.createViewsFromStyleJson(bundle.views)
+  end function
+
+  protected override function onContentUpdate(content as mc.types.node)
+    'do stuff with content here
+    m.video.content = m.createSGNode("ContentNode", invalid, "content", {
+      streamFormat: "hls"
+      url: "https://bitmovin-a.akamaihd.net/content/sintel/hls/playlist.m3u8"
+    })
+    m.video.control = "play"
+  end function
+
+  public override function getFocusIndicatorConfig(cellInfo as sl.CellInfo, direction as integer, isFloatingFocus as boolean, isFromListScroll = false as boolean) as sl.FocusIndicatorConfig
+    return sl.createFocusIndicatorConfig(m.top, invalid, direction)
+  end function
+
+end class

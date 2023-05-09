@@ -13,8 +13,8 @@ namespace sl
     direction as integer
     fraction as float
     isRowEvent as boolean
-    cell as mc.types.node
-    row as mc.types.node
+    cell as sc.types.node
+    row as sc.types.node
   end interface
 
   class ItemFocusManager extends sc.BaseClass
@@ -42,7 +42,7 @@ namespace sl
     '++ Initialization
     '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-    function new(name as string, focusIndicatorManager as mc.types.node)
+    function new(name as string, focusIndicatorManager as sc.types.node)
       super("ItemFocusManager")
       m.name = name
       m.focusIndicatorManager = focusIndicatorManager
@@ -61,9 +61,9 @@ namespace sl
     '++ Public Methods
     '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-    private list as mc.types.node
+    private list as sc.types.node
 
-    function setList(list as mc.types.node)
+    function setList(list as sc.types.node)
       m.list = list
       m.delegateManager = new sl.ListDelegateManager(list)
     end function

@@ -1,6 +1,6 @@
 import "pkg:/source/roku_modules/log/LogMixin.brs"
-import "pkg:/components/view/mixin/FocusMixin.bs"
-import "pkg:/components/view/mixin/KeyMixin.bs"
+import "pkg:/components/lib/FocusMixin.bs"
+import "pkg:/components/lib/KeyMixin.bs"
 import "pkg:/source/lib/Utils.bs"
 import "pkg:/source/lib/ViewUtils.bs"
 import "pkg:/source/lib/Types-Polyfill.bs"
@@ -43,7 +43,7 @@ end function
 '  * @description initializes the passed in View
 '  * @param {BaseView} the view to initialize
 '  */
-function initializeView(view as mc.types.node, args = invalid as mc.types.assocarray) as void
+function initializeView(view as sc.types.node, args = invalid as sc.types.assocarray) as void
   if view <> invalid
     view@._initialize(args)
   else
@@ -71,7 +71,7 @@ end function
 '++ Lifecycle methods
 '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-function _onShow(args as mc.types.assocarray) as void
+function _onShow(args as sc.types.assocarray) as void
   ' ? ">> base VIEW _OnShow " ; m.top.id ; " isShown " ; m.top.isShown
   oldIsShowing = m.top.isShown
   if not m.top.isInitialized
@@ -87,9 +87,7 @@ function _onShow(args as mc.types.assocarray) as void
     end if
     m.wasShown = true
 
-    if m.vm <> invalid and m.vm.onFirstShow <> invalid
-      m.vm.onFirstShow()
-    else if m.onFirstShow <> invalid
+    if m.onFirstShow <> invalid
       m.onFirstShow()
     end if
 
@@ -102,16 +100,14 @@ function _onShow(args as mc.types.assocarray) as void
       onShow()
     end if
 
-    if m.vm <> invalid and m.vm.onShow <> invalid
-      m.vm.onShow()
-    else if m.onShow <> invalid
+    if m.onShow <> invalid
       m.onShow()
     end if
 
   end if
 end function
 
-function _onHide(args as mc.types.assocarray)
+function _onHide(args as sc.types.assocarray)
   if m.wasShown
     m.top.isShown = false
     'bs:disable-next-line
@@ -120,9 +116,6 @@ function _onHide(args as mc.types.assocarray)
       onHide()
     end if
 
-    if m.vm <> invalid and m.vm.onHide <> invalid
-      m.vm.onHide()
-    end if
     if m.onHide <> invalid
       m.onHide()
     end if
@@ -132,7 +125,7 @@ function _onHide(args as mc.types.assocarray)
   end if
 end function
 
-function _initialize(args = invalid as mc.types.assocarray)
+function _initialize(args = invalid as sc.types.assocarray)
   if not m.top.isInitialized
     m.top.isInitialized = true
     initialize(args)
@@ -168,26 +161,22 @@ function _observeVisibilityIfRequired()
   end if
 end function
 
-function onAddedToAggregateView(view as mc.types.node)
+function onAddedToAggregateView(view as sc.types.node)
   if not m.isInAggregateView
     m.isInAggregateView = true
     _observeVisibilityIfRequired()
-    if m.vm <> invalid and m.vm.onAddedToAggregateView <> invalid
-      m.vm.onAddedToAggregateView(view)
-    else if m.onAddedToAggregateView <> invalid
+    if m.onAddedToAggregateView <> invalid
       m.onAddedToAggregateView(view)
     end if
   end if
 end function
 
-function onRemovedFromAggregateView(view as mc.types.node)
+function onRemovedFromAggregateView(view as sc.types.node)
   if m.isInAggregateView
     m.isInAggregateView = false
 
     _observeVisibilityIfRequired()
-    if m.vm <> invalid and m.vm.onRemovedFromAggregateView <> invalid
-      m.vm.onRemovedFromAggregateView(view)
-    else if m.onRemovedFromAggregateView <> invalid
+    if m.onRemovedFromAggregateView <> invalid
       m.onRemovedFromAggregateView(view)
     end if
   end if
@@ -244,17 +233,7 @@ function onGainedFocus(isSelfFocused as boolean)
     m.log.info("onGainedFocus", m.top.subType(), isSelfFocused)
   end if
 
-  if m.vm <> invalid
-    if m.vm.onGainedFocus <> invalid
-      m.vm.onGainedFocus(isSelfFocused)
-    end if
-
-    'bs:disable-next-line
-    if sc.isFunction(mx_onFocusIdChange)
-      'bs:disable-next-line
-      mx_onFocusIdChange(m.vm.focusId)
-    end if
-  else if m.onGainedFocus <> invalid
+  if m.onGainedFocus <> invalid
     m.onGainedFocus(isSelfFocused)
   end if
 end function
@@ -270,9 +249,7 @@ function onLostFocus()
   if m.global.focusManager.isLogging
     m.log.info("lost focus:", m.top.subType(), ".", m.top.id)
   end if
-  if m.vm <> invalid and m.vm.onLostFocus <> invalid
-    m.vm.onLostFocus()
-  else if m.onLostFocus <> invalid
+  if m.onLostFocus <> invalid
     m.onLostFocus()
   end if
 end function
@@ -281,9 +258,7 @@ function onChildLostFocus()
   if m.global.focusManager.isLogging
     m.log.info("child lost focus:", m.top.subType(), ".", m.top.id)
   end if
-  if m.vm <> invalid and m.vm.onChildLostFocus <> invalid
-    m.vm.onChildLostFocus()
-  else if m.onChildLostFocus <> invalid
+  if m.onChildLostFocus <> invalid
     m.onChildLostFocus()
   end if
 end function
@@ -304,5 +279,5 @@ end function
 '++ abstract lifecycle methods
 '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-function initialize(args as mc.types.assocarray)
+function initialize(args as sc.types.assocarray)
 end function

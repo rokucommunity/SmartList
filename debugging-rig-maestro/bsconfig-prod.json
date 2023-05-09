@@ -1,0 +1,45 @@
+{
+  "extends": "bsconfig.json",
+  "files": [
+    "!**/*.i8n.json",
+    "manifest",
+    "source/**/*.*",
+    "images/**/*.*",
+    "sounds/**/*.*",
+    "sounds/*.*",
+    "fonts/**/*.*",
+    "meta/**/*.*",
+    "components/**/*.*",
+    "source/tests/**/*.*",
+    { "src": "../lib/source/**/*.*", "dest": "source" },
+    { "src": "!../lib/source/**/Global.bs" },
+    { "src": "../lib/components/**/*.*", "dest": "components" },
+    { "src": "../src-prod/source/**/*.*", "dest": "source" },
+    "!../lib/**/*.spec.bs",
+    "!../src-dev/**/*.spec.bs",
+    "!**/*.spec.bs"
+  ],
+  "plugins": [
+    "roku-log-bsc-plugin",
+    "maestro-roku-bsc-plugin",
+    "./build-scripts/rig-bsc-plugin/plugin.js"
+  ],
+  "maestro": {
+    "excludeFilters": [
+      "**/RALETrackerTask.*",
+      "**/roku_modules/**/*",
+      "**/rooibos-roku/**/*",
+      "**/rooibos/**/*"
+    ],
+    "buildForIDE": false,
+    "extraValidation": {
+      "doExtraValidation": true,
+      "doExtraImportValidation": true
+    }
+  },
+  "rokuLog": {
+    "strip": true
+  },
+  "NOTE:roku-deploy is currently broken and causes a crash when createPackage is true": true,
+  "_createPackage": true
+}

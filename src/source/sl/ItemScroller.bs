@@ -1,5 +1,4 @@
 import "pkg:/source/sl/ItemScroller.bs"
-import "pkg:/components/view/mixin/FocusMixin.bs"
 import "pkg:/source/sl/ListItemViewManager.bs"
 import "pkg:/source/lib/BaseClass.bs"
 import "pkg:/source/lib/Animation.bs"
@@ -12,7 +11,7 @@ import "pkg:/source/lib/DebugTimer.bs"
 namespace sl
   class ItemScroller extends sc.BaseClass
 
-    public container as mc.types.node
+    public container as sc.types.node
 
     public viewManager
     public focusManager
@@ -28,7 +27,7 @@ namespace sl
     public nextFocusIndicatorConfig as sl.FocusIndicatorConfig
     public targetCellInfo as sl.CellInfo
 
-    public focusedItem as mc.types.node
+    public focusedItem as sc.types.node
 
     public index = 0
     public nextIndex = 0
@@ -69,7 +68,7 @@ namespace sl
     private pendingDirection
     private pendingIsFloatingFocus
 
-    function new(name as string, viewManager as sl.ItemViewManager, focusManager as mc.types.node)
+    function new(name as string, viewManager as sl.ItemViewManager, focusManager as sc.types.node)
       super(name)
       m.viewManager = viewManager
       viewManager.itemScroller = m
@@ -206,7 +205,7 @@ namespace sl
     end function
 
     function canMoveToIndex(index as integer, direction as integer) as boolean
-      ' ? "CMTI D " direction; " MI " ; index ; " NC " m.viewManager.numberOfItems
+      ' ? "CanMoveToIndex D " direction; " MI " ; index ; " NC " m.viewManager.numberOfItems
       ' m.viewManager.recalculateCellInfos(false)
       return m.viewManager.numberOfItems > 0 and ((direction = -1 and index > -1) or (direction = 1 and index < m.viewManager.numberOfItems))
     end function
@@ -215,7 +214,7 @@ namespace sl
       ' m.viewManager.recalculateCellInfos(false)
       info = m.viewManager.getCellInfoForContentIndex(index)
       if info <> invalid
-        ' ? " MTCI 111 " m.__classname
+        ' ? " Move To Content Index 111 " m.__classname
         ' ? " INFO INDEX IS " info.index
         return m.moveToIndex(info.index, animated, animSpeedIndex, direction, forceSequential)
       else
@@ -273,7 +272,7 @@ namespace sl
         return false
       end if
 
-      ' ? " MTCI 222 " m.__classname
+      ' ? " MoveToContentIndex 222 " m.__classname
       return m.moveToIndex(index, animated, animSpeedIndex, direction, forceSequential)
 
       ' return false
@@ -296,7 +295,7 @@ namespace sl
         return false
       end if
 
-      ' ? " MTCI 333 " m.__classname " index " index " numberOfItems " m.viewManager.numberOfItems
+      ' ? " MoveToContentIndex 333 " m.__classname " index " index " numberOfItems " m.viewManager.numberOfItems
       m.moveToIndex(index, animated, animSpeedIndex)
       return true
     end function
@@ -772,7 +771,7 @@ namespace sl
 
       if notifyFocusManager
         m.log.verbose("==== FROM setFocusIndex ", m.__classname)
-        ' ? " ITEMSCROLLER FROM SET FOCUS INDEX NOTIFY " m.nextCellInfo.index
+        ' ? " ItemScroller FROM SET FOCUS INDEX NOTIFY " m.nextCellInfo.index
         m._setFocusManagerInfo(m.cellInfo, m.nextCellInfo, m.direction, false)
       end if
     end function

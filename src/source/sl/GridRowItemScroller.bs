@@ -6,7 +6,7 @@ namespace sl
 
     public currentRowIndex = 0
 
-    function new(viewManager as sl.GridRowItemViewManager, focusManager as mc.types.node)
+    function new(viewManager as sl.GridRowItemViewManager, focusManager as sc.types.node)
       super("GridRowItemScroller", viewManager, focusManager)
       m.isOnlyFloatingFocus = true
     end function

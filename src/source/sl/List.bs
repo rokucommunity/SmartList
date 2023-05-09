@@ -15,10 +15,10 @@ namespace sl
     '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
     'must be of type ListContent
-    public content as mc.types.node
+    public content as sc.types.node
 
     'view that will respond to events
-    public delegate as mc.types.node
+    public delegate as sc.types.node
 
     public _isRenderingUpdate = false
     public _timeSinceLastKeypress = 0
@@ -65,20 +65,20 @@ namespace sl
     '++ Views
     '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-    private contentGroup as mc.types.node
-    private rowsGroup as mc.types.node
+    private contentGroup as sc.types.node
+    private rowsGroup as sc.types.node
 
     '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     '++ Shared managers
     '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-    public focusIndicatorManager as mc.types.node
+    public focusIndicatorManager as sc.types.node
 
     '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     '++ internal event tracking
     '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-    public nextFocusIndex as mc.types.array
+    public nextFocusIndex as sc.types.array
 
     public screenPos = 0
     public nextScreenPos = 0
@@ -95,10 +95,10 @@ namespace sl
     private isInitialized = false
     private isDoingFlowFocus = false
 
-    private focusedRowContent as mc.types.node
-    private focusedCellContent as mc.types.node
+    private focusedRowContent as sc.types.node
+    private focusedCellContent as sc.types.node
 
-    private preHiddenContent as mc.types.node
+    private preHiddenContent as sc.types.node
 
     private keyTimer = createObject("roTimespan")
 
@@ -189,7 +189,7 @@ namespace sl
     '++ callbacks
     '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-    function setContent(content as mc.types.node, forceUpdate = false as boolean) as void
+    function setContent(content as sc.types.node, forceUpdate = false as boolean) as void
       m.contentManager.setContent(content, forceUpdate)
     end function
 
@@ -281,7 +281,7 @@ namespace sl
 
     function getRow(index as integer) as dynamic
       if m.contentManager.content <> invalid
-        return m.contentManager.content.getChild(index)
+        return m.contentManager.contentItems[index]
       else
         return invalid
       end if
@@ -289,7 +289,7 @@ namespace sl
 
     function getItem(rowIndex as integer, index as integer) as dynamic
       if m.contentManager.content <> invalid
-        rowItem = m.contentManager.content.getChild(rowIndex)
+        rowItem = m.contentManager.contentItems[index]
         if rowItem <> invalid
           return rowItem.getChild(index)
         end if

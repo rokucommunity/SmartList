@@ -23,7 +23,7 @@ namespace sl
     private placeHolderCell = m.createSGNode("sl_BaseCell", invalid, "#_#phc")
     private renderedRows = {}
 
-    function new(list as mc.types.node, row as mc.types.node, container as mc.types.node, componentPool as mc.types.node, minPos as integer, maxPos as integer)
+    function new(list as sc.types.node, row as sc.types.node, container as sc.types.node, componentPool as sc.types.node, minPos as integer, maxPos as integer)
       super("GridRowItemViewManager", list, container, componentPool, 0, minPos, maxPos)
       m.row = row
     end function
@@ -42,7 +42,7 @@ namespace sl
       return fix(index / m.numCols)
     end function
 
-    function getCellInfosInRow(rowIndex as integer) as mc.types.array
+    function getCellInfosInRow(rowIndex as integer) as sc.types.array
       infos = []
       firstIndex = rowIndex * m.numCols
       for i = firstIndex to firstIndex + m.numCols - 1
@@ -54,7 +54,7 @@ namespace sl
       return infos
     end function
 
-    function getRenderersInRow(rowIndex as integer, createIfNotReady = false as boolean, forceUpdate = false as boolean) as mc.types.array
+    function getRenderersInRow(rowIndex as integer, createIfNotReady = false as boolean, forceUpdate = false as boolean) as sc.types.array
       infos = m.getCellInfosInRow(rowIndex)
       renderers = []
       ' ? " renderers in row " rowIndex " "
@@ -94,7 +94,7 @@ namespace sl
     '++ Overridden
     '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-    override function getRowInfos(yPosition as integer, forceRecalculate = false as boolean) as mc.types.array
+    override function getRowInfos(yPosition as integer, forceRecalculate = false as boolean) as sc.types.array
       if m.content = invalid
         m.log.info("gridrow has invalid")
         return []
@@ -152,7 +152,7 @@ namespace sl
       super.reset()
     end function
 
-    override function createRenderers(content as mc.types.node, forceSync = false as boolean) as boolean
+    override function createRenderers(content as sc.types.node, forceSync = false as boolean) as boolean
       'renderers are created as needed
       m.previousRendereredByContentId = m.renderersByContentId
       m.renderersByContentId = {}
@@ -179,8 +179,8 @@ namespace sl
 
       x = 0
       y = 0
-      numItems = m.content.getChildCount()
-      children = m.content.getChildren(-1, 0)
+      numItems = m.contentItems.count()
+      children = m.contentItems
       m.numCols = m.settings.numColumns
       m.numCols = m.numCols < 1 ? 1 : m.numCols
       rowIndex = 0
@@ -251,7 +251,7 @@ namespace sl
       ' ? " UPDATE LAYOUT MADE " m.numRows " rows from " m.numberOfItems " items"
     end function
 
-    private function getRowInfo(rowIndex as integer, size as mc.types.array, yOffset as integer, y as integer, height as integer, maxPos as integer) as sl.CellInfo
+    private function getRowInfo(rowIndex as integer, size as sc.types.array, yOffset as integer, y as integer, height as integer, maxPos as integer) as sl.CellInfo
 
       yOffset += y
 
@@ -332,8 +332,8 @@ namespace sl
         isFocusChangeRequired: false
       }
 
-      if m.itemScroller.index >= m.content.getChildCount()
-        m.itemScroller.index = sc.clamp(m.itemScroller.index, 0, m.content.getChildCount() - 1)
+      if m.itemScroller.index >= m.contentItems.count()
+        m.itemScroller.index = sc.clamp(m.itemScroller.index, 0, m.contentItems.count() - 1)
       end if
 
       m.previousRendereredByContentId = m.renderersByContentId

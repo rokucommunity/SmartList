@@ -1,7 +1,7 @@
 import "pkg:/source/roku_modules/log/LogMixin.brs"
 import "pkg:/source/lib/Utils.bs"
 import "pkg:/source/lib/NodeClass.bs"
-import "pkg:/components/view/mixin/FocusMixin.bs"
+import "pkg:/components/lib/FocusMixin.bs"
 
 namespace sv
   ' /**
@@ -14,9 +14,6 @@ namespace sv
     '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     '++ Protected Fields
     '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-    @inject("styleManager")
-    protected styleManager
 
     protected isFocused = false
     protected isShown = false
@@ -39,7 +36,7 @@ namespace sv
     '++ View Helpers
     '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-    protected function initializeView(view as mc.types.node, args = invalid as mc.types.array)
+    protected function initializeView(view as sc.types.node, args = invalid as sc.types.array)
       if view <> invalid
         view@._initialize(args)
       else
@@ -47,13 +44,13 @@ namespace sv
       end if
     end function
 
-    protected function setFocus(target as mc.types.node, forceSet = false as boolean)
+    protected function setFocus(target as sc.types.node, forceSet = false as boolean)
       m.focusedControl = target
       'bs:disable-next-line
       sv.setFocus(target, forceSet)
     end function
 
-    protected function setFocusLocked(target as mc.types.node, message = "" as string)
+    protected function setFocusLocked(target as sc.types.node, message = "" as string)
       if target <> invalid
         m.focusedControl = target
       end if
@@ -66,7 +63,7 @@ namespace sv
       sv.setFocusUnlocked(reason)
     end function
 
-    protected function isControlFocused(control as mc.types.node)
+    protected function isControlFocused(control as sc.types.node)
       return m.focusedControl <> invalid and control <> invalid and m.focusedControl.id = control.id
     end function
 

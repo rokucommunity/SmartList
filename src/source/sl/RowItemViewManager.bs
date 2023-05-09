@@ -6,11 +6,11 @@ namespace sl
     public lastRowIsRendered = "none"
     public isFlowSupported = false
 
-    function new(list as mc.types.node, row as mc.types.node, container as mc.types.node, componentPool as mc.types.node, minPos as integer, maxPos as integer)
+    function new(list as sc.types.node, row as sc.types.node, container as sc.types.node, componentPool as sc.types.node, minPos as integer, maxPos as integer)
       super("RowItemViewManager", list, container, componentPool, 0, minPos, maxPos)
       m.row = row
     end function
-
+f
     '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     '++ overridden
     '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -25,7 +25,7 @@ namespace sl
     end function
 
 
-    override function createRenderers(content as mc.types.node, forceSync = false as boolean) as boolean
+    override function createRenderers(content as sc.types.node, forceSync = false as boolean) as boolean
       ' ? "::: CREATE RENDERERS" ; m.renderersByContentId
       'renderers are created as needed
       m.previousRendereredByContentId = m.renderersByContentId
@@ -52,7 +52,7 @@ namespace sl
       ' m.contentGroup.translation = [0, 0]
       focusSettings = m.settings.focusSettings
       x = 0
-      for each item in m.content.getChildren(-1, 0)
+      for each item in m.contentItems
         ' ? " U B"
         ' ? ">>>> laying out ", item.title, index
         settings = sl.listMixin.getCellSettings(m.owner.content, m.content, item)
@@ -111,8 +111,8 @@ namespace sl
         isFocusChangeRequired: false
       }
 
-      if m.itemScroller.index >= m.content.getChildCount()
-        m.itemScroller.index = sc.clamp(m.itemScroller.index, 0, m.content.getChildCount() - 1)
+      if m.itemScroller.index >= m.contentItems.count()
+        m.itemScroller.index = sc.clamp(m.itemScroller.index, 0, m.contentItems.count() - 1)
       end if
 
       m.rowInfos = invalid

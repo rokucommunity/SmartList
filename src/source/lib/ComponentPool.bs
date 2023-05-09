@@ -40,7 +40,7 @@ namespace sc
       m.numberOfComponentsInUse = 0
     end function
 
-    function getComponentPool(componentType as string) as mc.types.assocarray
+    function getComponentPool(componentType as string) as sc.types.assocarray
       pool = m.poolsByComponentType[componentType]
       if pool = invalid
         pool = { usedComponentsById: {}
@@ -74,7 +74,7 @@ namespace sc
       end for
     end function
 
-    function getComponent(componentType as string, numToCreateIfDry = -1 as integer) as mc.types.node
+    function getComponent(componentType as string, numToCreateIfDry = -1 as integer) as sc.types.node
 
       pool = m.getComponentPool(componentType)
 
@@ -122,7 +122,7 @@ namespace sc
       end if
     end function
 
-    function releaseComponent(component as mc.types.node)
+    function releaseComponent(component as sc.types.node)
       if component <> invalid
         ' ? ">>>>releasing component "; sc.dv(component)
         if component.getParent() <> invalid
@@ -136,7 +136,7 @@ namespace sc
       end if
     end function
 
-    function releaseComponents(components as mc.types.array)
+    function releaseComponents(components as sc.types.array)
       for each component in components
         m.releaseComponent(component)
       end for

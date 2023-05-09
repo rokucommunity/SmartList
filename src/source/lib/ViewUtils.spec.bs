@@ -5,10 +5,10 @@ import "pkg:/source/lib/BaseView.bs"
 namespace tests
 
   class TestViewTarget
-    private v1 as mc.types.node
-    private v2 as mc.types.node
-    private v3 as mc.types.node
-    private v4 as mc.types.node
+    private v1 as sc.types.node
+    private v2 as sc.types.node
+    private v3 as sc.types.node
+    private v4 as sc.types.node
     createViewsFromStyleJson = sv.createViewsFromStyleJson
     updateViewsWithStyleJson = sv.updateViewsWithStyleJson
     getCurrentValuesWithStyleJson = sv.getCurrentValuesWithStyleJson
@@ -676,7 +676,7 @@ namespace tests
 
       json = [
         {
-          "_type": "sv_Label"
+          "_type": "mv_Label"
           "id": "v1"
           "height": 1
           "_dataMap": {
@@ -690,7 +690,7 @@ namespace tests
       target = m.executeCreateviews(json, node)
       m.assertNodeCount(node, 1)
       label = node.getChild(0)
-      m.assertNode(target, label, "sv_Label", 1)
+      m.assertNode(target, label, "mv_Label", 1)
       sv.applyDataMap(label)
       m.assertEqual(label.text, "title")
     end function
@@ -701,7 +701,7 @@ namespace tests
 
       json = [
         {
-          "_type": "sv_Label"
+          "_type": "mv_Label"
           "id": "v1"
           "height": 1
           "_dataMap": {
@@ -714,7 +714,7 @@ namespace tests
       target = m.executeCreateviews(json, node)
       m.assertNodeCount(node, 1)
       label = node.getChild(0)
-      m.assertNode(target, label, "sv_Label", 1)
+      m.assertNode(target, label, "mv_Label", 1)
       sv.applyDataMap(label)
       m.assertEqual(label.text, "")
     end function
@@ -725,7 +725,7 @@ namespace tests
 
       json = [
         {
-          "_type": "sv_Label"
+          "_type": "mv_Label"
           "id": "v1"
           "height": 1
           "_dataMap": {
@@ -742,7 +742,7 @@ namespace tests
       target = m.executeCreateviews(json, node)
       m.assertNodeCount(node, 1)
       label = node.getChild(0)
-      m.assertNode(target, label, "sv_Label", 1)
+      m.assertNode(target, label, "mv_Label", 1)
       sv.applyDataMap(label)
       m.assertEqual(label.text, "t")
       m.assertEqual(label.height, 400.0)
@@ -754,7 +754,7 @@ namespace tests
 
       json = [
         {
-          "_type": "sv_Label"
+          "_type": "mv_Label"
           "id": "v1"
           "height": 1
           "_dataMap": {
@@ -777,7 +777,7 @@ namespace tests
       target = m.executeCreateviews(json, node)
       m.assertNodeCount(node, 1)
       label = node.getChild(0)
-      m.assertNode(target, label, "sv_Label", 1)
+      m.assertNode(target, label, "mv_Label", 1)
 
       sv.applyDataMap(label, item)
 
@@ -791,7 +791,7 @@ namespace tests
 
       json = [
         {
-          "_type": "sv_Label"
+          "_type": "mv_Label"
           "id": "v1"
           "height": 1
           "_dataMap": {
@@ -810,7 +810,7 @@ namespace tests
       target = m.executeCreateviews(json, node)
       m.assertNodeCount(node, 1)
       label = node.getChild(0)
-      m.assertNode(target, label, "sv_Label", 1)
+      m.assertNode(target, label, "mv_Label", 1)
 
       sv.applyDataMap(label, item)
 
@@ -824,7 +824,7 @@ namespace tests
 
       json = [
         {
-          "_type": "sv_Label"
+          "_type": "mv_Label"
           "id": "v1"
           "height": 1
           "_dataMap": {
@@ -841,7 +841,7 @@ namespace tests
       target = m.executeCreateviews(json, node)
       m.assertNodeCount(node, 1)
       label = node.getChild(0)
-      m.assertNode(target, label, "sv_Label", 1)
+      m.assertNode(target, label, "mv_Label", 1)
 
       sv.applyDataMap(label)
 
@@ -860,7 +860,7 @@ namespace tests
 
       json = [
         {
-          "_type": "sv_Label"
+          "_type": "mv_Label"
           "id": "v1"
           "size": [1, 1]
           "_dataMap": {
@@ -880,7 +880,7 @@ namespace tests
       target = m.executeCreateviews(json, node)
       m.assertNodeCount(node, 1)
       label = node.getChild(0)
-      m.assertNode(target, label, "sv_Label", 1)
+      m.assertNode(target, label, "mv_Label", 1)
 
       sv.applyDataMap(label, item)
 
@@ -893,7 +893,7 @@ namespace tests
 
       json = [
         {
-          "_type": "sv_Label"
+          "_type": "mv_Label"
           "id": "v1"
           "size": [1, 1]
           "_dataMap": {
@@ -913,7 +913,7 @@ namespace tests
       target = m.executeCreateviews(json, node)
       m.assertNodeCount(node, 1)
       label = node.getChild(0)
-      m.assertNode(target, label, "sv_Label", 1)
+      m.assertNode(target, label, "mv_Label", 1)
 
       sv.applyDataMap(label, item)
 
@@ -926,7 +926,7 @@ namespace tests
 
       json = [
         {
-          "_type": "sv_Label"
+          "_type": "mv_Label"
           "id": "v1"
           "size": [1, 1]
           "_dataMap": {
@@ -946,7 +946,7 @@ namespace tests
       target = m.executeCreateviews(json, node)
       m.assertNodeCount(node, 1)
       label = node.getChild(0)
-      m.assertNode(target, label, "sv_Label", 1)
+      m.assertNode(target, label, "mv_Label", 1)
 
       sv.applyDataMap(label, item)
 

@@ -1,0 +1,151 @@
+import "pkg:/source/lib/Utils.bs"
+
+' /**
+'  * @module KeyMixin
+'  * @description Mixin method for helping with managing keypresses. Intended to be included in a base class, so that the super class can override the methods. Supports standard presses and long press gestures too.
+'  */
+
+function keyPressMixinInit()
+  m.isKeyPressLocked = false
+  m.longPressTimer = invalid
+  m.longPressKey = ""
+  m.isLongPressStarted = false
+  m.longPressInterval = 0
+end function
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+'++ KEY HANDLING
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+function onKeyEvent(key as string, press as boolean) as boolean
+  result = false
+  if press
+    'bs:disable-next-line
+    if sc.isFunction(isAnyKeyPressLocked) and isAnyKeyPressLocked(key)
+      return true
+    else if sc_isFunction(m.isAnyKeyPressLocked) and m.isAnyKeyPressLocked(key)
+      return true
+    else if m.isKeyPressLocked
+      m.log.warn("All key presses are locked, due to isKeyPressLocked flag on ", m.top.id)
+      return true
+    end if
+
+    if key = "down"
+      'bs:disable-next-line
+      if sc.isFunction(onKeyPressDown) then result = onKeyPressDown() else result = false
+    else if key = "up"
+      'bs:disable-next-line
+      if sc.isFunction(onKeyPressUp) then result = onKeyPressUp() else result = false
+    else if key = "left"
+      'bs:disable-next-line
+      if sc.isFunction(onKeyPressLeft) then result = onKeyPressLeft() else result = false
+    else if key = "right"
+      'bs:disable-next-line
+      if sc.isFunction(onKeyPressRight) then result = onKeyPressRight() else result = false
+    else if key = "OK"
+      'bs:disable-next-line
+      if sc.isFunction(onKeyPressOK) then result = onKeyPressOK() else result = false
+    else if key = "back"
+      'bs:disable-next-line
+      if sc.isFunction(onKeyPressBack) then result = onKeyPressBack() else result = false
+    else if key = "options"
+      'bs:disable-next-line
+      if sc.isFunction(onKeyPressOptions) then result = onKeyPressOptions() else result = false
+    else if key = "play"
+      'bs:disable-next-line
+      if sc.isFunction(onKeyPressPlay) then result = onKeyPressPlay() else result = false
+    else if key = "replay"
+      'bs:disable-next-line
+      if sc.isFunction(onKeyPressReplay) then result = onKeyPressReplay() else result = false
+    end if
+    ' else if m.longPressKey <> ""
+    '   toggleLongPressTimer(0)
+    '   result = true
+  end if
+
+  if result = invalid
+    result = false
+  end if
+
+  if result and press
+
+    'bs:disable-next-line
+    if sc.isFunction(getLongPressIntervalForKey) then longPressInterval = getLongPressIntervalForKey(key) else longPressInterval = 0
+    if longPressInterval > 0
+      m.log.info("entering long press for key ", key)
+      m.longPressKey = key
+      toggleLongPressTimer(longPressInterval)
+    end if
+  else
+    'bs:disable-next-line
+    result = sc.isFunction(isCapturingAnyKeyPress) and isCapturingAnyKeyPress(key, press)
+  end if
+
+  if result = false and m.onKeyEvent <> invalid
+    result = m.onKeyEvent(key, press)
+  end if
+
+  return result
+end function
+
+function toggleLongPressTimer(interval as float)
+  if interval > 0
+    if m.longPressTimer = invalid
+      m.longPressTimer = sc.private.getMaestroPooledComponent("Timer")
+    end if
+    m.longPressTimer.duration = interval
+    m.longPressTimer.repeat = true
+    m.longPressTimer.observeFieldScoped("fire", "onLongPressTimerFire")
+    m.longPressTimer.control = "start"
+  else
+    if m.longPressTimer <> invalid
+      m.longPressTimer.unobserveFieldScoped("fire")
+      m.longPressTimer.control = "stop"
+      m.longPressTimer.repeat = false
+      sc.private.releaseMaestroPooledComponent(m.longPressTimer)
+      m.longPressTimer = invalid
+    end if
+
+    if m.longPressKey <> ""
+      m.log.info("finishing longPress on key ", m.longPressKey)
+      'bs:disable-next-line
+      if m.isLongPressStarted and sc.isFunction(onLongPressFinish)
+        'bs:disable-next-line
+        onLongPressFinish(m.longPressKey)
+      end if
+      m.longPressKey = ""
+      m.isLongPressStarted = false
+    end if
+  end if
+end function
+
+function onLongPressTimerFire()
+  if m.isLongPressStarted
+    'bs:disable-next-line
+    if sc.isFunction(onLongPressUpdate)
+      'bs:disable-next-line
+      if not onLongPressUpdate(m.longPressKey)
+        m.log.info("long press was cancelled by the onLongPressUpdate call")
+        if sc.isFunction(toggleLongPressTimer)
+          toggleLongPressTimer(0)
+        end if
+      else
+        'long press timer will keep ticking
+        ' toggleLongPressTimer(m.longPressInterval)
+      end if
+    end if
+  else
+    'bs:disable-next-line
+    if sc.isFunction(onLongPressStart) and not onLongPressStart(m.longPressKey)
+      m.log.info("long press was rejected by onLongPressStart call")
+      toggleLongPressTimer(0)
+    else
+      m.log.info("long press is accepted : starting for key ", m.longPressKey)
+      m.isLongPressStarted = true
+      'timer will keep ticking
+      ' toggleLongPressTimer(m.longPressInterval)
+    end if
+  end if
+end function
+
+

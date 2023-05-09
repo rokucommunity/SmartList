@@ -1,0 +1,56 @@
+import "pkg:/source/roku_modules/maestro/view/debug/DeveloperScreen.brs"
+import "pkg:/source/roku_modules/maestro/view/DialogUtils.brs"
+import "pkg:/source/roku_modules/maestro/view/KeyboardDialogUtils.brs"
+import "pkg:/source/roku_modules/maestro/core/Registry.brs"
+
+namespace main
+  @node("DeveloperScreen", "mv_DeveloperScreen")
+  class DeveloperScreen extends mv.debug.DeveloperScreen
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Initialization
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    function new()
+      super()
+    end function
+
+    protected override function initialize()
+      super.initialize()
+      m.showScreen(m.createSGNode("ListEnterExitScreen"))
+    end function
+
+    protected override function getMenuPageBuilderFunctions() as mc.types.array
+      return [
+        m.getDefaultPage
+        m.getPage0
+      ]
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Pages
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    protected function getPage0()
+      return [
+        ["Disney Inspired Hero ", function(): m.showScreen(m.createSGNode("DisneyHeroScreen")): end function]
+        ["List OnEnterOnExit", function(): m.showScreen(m.createSGNode("ListEnterExitScreen")): end function]
+        ["List ", function(): m.showScreen(m.createSGNode("ListScreen")): end function]
+        ["List Editing (team screen)", function(): m.showScreen(m.createSGNode("TeamScreen")): end function]
+        ["Grid Item JumpToItem", function(): m.showScreen(m.createSGNode("FocusOnGridItemScreen")): end function]
+        ["Grid Item Moving", function(): m.showScreen(m.createSGNode("UpdateGridItemsScreen")): end function]
+        ["RowList", function(): m.showScreen(m.createSGNode("RowListScreen")): end function]
+        ["List Updates", function(): m.showScreen(m.createSGNode("UpdateListDataScreen")): end function]
+      ]
+    end function
+
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Key Presses
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    private function isCapturingAnyKeyPress(key as string, press as boolean) as boolean
+      return true
+    end function
+
+  end class
+end namespace

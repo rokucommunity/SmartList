@@ -6,7 +6,7 @@ namespace sl
   class ViewPortEventNotifier extends sc.BaseClass
     'rendered component maps
     private viewManager as sl.ItemViewManager
-    private container as mc.types.node
+    private container as sc.types.node
     private axes = 0
     public delegates = []
 

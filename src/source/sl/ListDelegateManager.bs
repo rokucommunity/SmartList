@@ -3,11 +3,11 @@ import "pkg:/source/lib/BaseClass.bs"
 namespace sl
 
   class ListDelegateManager extends sc.BaseClass
-    public listDelegate as mc.types.node
+    public listDelegate as sc.types.node
     public isActive = true
     public isNotifyingListDelegate = true
 
-    private list as mc.types.node
+    private list as sc.types.node
     private cellDelegateFunctionMap = {
       "willGainFocus": "onCellWillGainFocus"
       "willLoseFocus": "onCellWillLoseFocus"
@@ -35,12 +35,12 @@ namespace sl
     }
 
 
-    function new(list as mc.types.node)
+    function new(list as sc.types.node)
       super("ListDelegateManager")
       m.list = list
     end function
 
-    function callCellDelegateMethod(eventName as string, event as mc.types.assocarray) as void
+    function callCellDelegateMethod(eventName as string, event as sc.types.assocarray) as void
       if not m.isActive
         m.log.info(" ****** DELEGATE MANAGER NOT ACTIVE ********")
         ' ? " *********************** DELEGATE MANAGER NOT ACTIVE"
@@ -81,7 +81,7 @@ namespace sl
       end if
     end function
 
-    function callRowDelegateMethod(eventName as string, event as mc.types.assocarray) as void
+    function callRowDelegateMethod(eventName as string, event as sc.types.assocarray) as void
       if not m.isActive
         m.log.info(" ****** DELEGATE MANAGER NOT ACTIVE ********")
         ' ? " *********************** DELEGATE MANAGER NOT ACTIVE"
@@ -126,7 +126,7 @@ namespace sl
 
     end function
 
-    function callCellDelegateMethodOnList(eventName as string, event as mc.types.assocarray) as void
+    function callCellDelegateMethodOnList(eventName as string, event as sc.types.assocarray) as void
       delegateFunctionName = m.cellDelegateFunctionMap[eventName]
       if m.listDelegate = invalid
         return
@@ -148,7 +148,7 @@ namespace sl
       end if
     end function
 
-    function callRowDelegateMethodOnList(eventName as string, event as mc.types.assocarray) as void
+    function callRowDelegateMethodOnList(eventName as string, event as sc.types.assocarray) as void
       delegateFunctionName = m.rowDelegateFunctionMap[eventName]
       if m.listDelegate = invalid
         return

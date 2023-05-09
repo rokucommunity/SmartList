@@ -4,14 +4,14 @@ import "pkg:/source/lib/Tasks.bs"
 import "pkg:/source/lib/ViewUtils.bs"
 
 namespace sv.animations.utils
-  function colorTo(target as mc.types.node, duration as float, toValue as integer, start = true as boolean, delay = 0 as float) as sv.animations.Fade
+  function colorTo(target as sc.types.node, duration as float, toValue as integer, start = true as boolean, delay = 0 as float) as sv.animations.Fade
     anim = new sv.animations.Color(target, duration, target.opacity, toValue, delay)
     if start
       anim.start()
     end if
     return anim
   end function
-  function fadeTo(target as mc.types.node, duration as float, toValue as float, start = true as boolean, delay = 0 as float) as sv.animations.Fade
+  function fadeTo(target as sc.types.node, duration as float, toValue as float, start = true as boolean, delay = 0 as float) as sv.animations.Fade
     anim = new sv.animations.Fade(target, duration, target.opacity, toValue, delay)
     if start
       anim.start()
@@ -19,7 +19,7 @@ namespace sv.animations.utils
     return anim
   end function
 
-  function scaleTo(target as mc.types.node, duration as float, toValue as float, start = true as boolean, delay = 0 as float) as sv.animations.Scale
+  function scaleTo(target as sc.types.node, duration as float, toValue as float, start = true as boolean, delay = 0 as float) as sv.animations.Scale
     anim = new sv.animations.Scale(target, duration, target.scale, toValue, delay)
     if start
       anim.start()
@@ -27,7 +27,7 @@ namespace sv.animations.utils
     return anim
   end function
 
-  function moveTo(target as mc.types.node, duration as float, toValue as float, start = true as boolean, delay = 0 as float) as sv.animations.Move
+  function moveTo(target as sc.types.node, duration as float, toValue as float, start = true as boolean, delay = 0 as float) as sv.animations.Move
     anim = new sv.animations.Move(target, duration, target.translation, toValue, delay)
     if start
       anim.start()
@@ -35,7 +35,7 @@ namespace sv.animations.utils
     return anim
   end function
 
-  function animateToJsonViewState(target as mc.types.node, duration as float, toValue as mc.types.assocarray, start = true as boolean, delay = 0 as float) as sv.animations.ViewJson
+  function animateToJsonViewState(target as sc.types.node, duration as float, toValue as sc.types.assocarray, start = true as boolean, delay = 0 as float) as sv.animations.ViewJson
     anim = new sv.animations.ViewJson(target, duration, target.translation, toValue, delay)
     if start
       anim.start()
@@ -68,7 +68,7 @@ namespace sv.animations.utils
     return invalid
   end function
 
-  function interpolateRectangle(a as mc.types.array, b as mc.types.array, fraction as float) as mc.types.array
+  function interpolateRectangle(a as sc.types.array, b as sc.types.array, fraction as float) as sc.types.array
     if sc.isRectangle(a) and sc.isRectangle(b)
       return [
         sv.animations.utils.interpolateNumber(a[0], b[0], fraction)
@@ -81,7 +81,7 @@ namespace sv.animations.utils
     end if
   end function
 
-  function interpolatePoint(a as mc.types.array, b as mc.types.array, fraction as float) as mc.types.array
+  function interpolatePoint(a as sc.types.array, b as sc.types.array, fraction as float) as sc.types.array
     if sc.isPoint(a) and sc.isPoint(b)
       return [a[0] + (b[0] - a[0]) * fraction, a[1] + (b[1] - a[1]) * fraction]
     else
@@ -112,7 +112,7 @@ namespace sv.animations.utils
       return a
     end if
   end function
-  function interpolateAA(a as mc.types.assocarray, b as mc.types.assocarray, fraction as float) as mc.types.assocarray
+  function interpolateAA(a as sc.types.assocarray, b as sc.types.assocarray, fraction as float) as sc.types.assocarray
     if fraction > 0.5
       return b
     else
@@ -163,7 +163,7 @@ end namespace
 
 namespace sv.animations
   class AnimationBase
-    public node as mc.types.node
+    public node as sc.types.node
     public repeat as boolean
     public control as string
     public fromValue as dynamic
@@ -177,9 +177,9 @@ namespace sv.animations
 
     protected parentAnimation as sv.animations.AnimationBase
     protected log as log.Logger
-    protected target as mc.types.node
+    protected target as sc.types.node
 
-    function new(name as string, target as mc.types.node)
+    function new(name as string, target as sc.types.node)
       m.log = new log.Logger(name)
       if target = invalid or target.id = invalid or target.id = ""
         m.log.error("target must be a valid node with an id")
@@ -240,7 +240,7 @@ namespace sv.animations
     public animateFromCurrentValue = false 'if true, the animation will always take the current value, irrespective of from value
 
 
-    function new(target as mc.types.node, field as string, duration as float, fromValue as dynamic, toValue as dynamic, name = "AbstractAnimation" as string, delay = 0 as float, keys = invalid as mc.types.array)
+    function new(target as sc.types.node, field as string, duration as float, fromValue as dynamic, toValue as dynamic, name = "AbstractAnimation" as string, delay = 0 as float, keys = invalid as sc.types.array)
       super(name, target)
       if field = "#ga_random"
         field = "ga_" + rnd(2147483647).toStr()
@@ -276,7 +276,7 @@ namespace sv.animations
       m.animateFromCurrentValue = value
     end function
 
-    function setKeys(keys as mc.types.array, keyValues as mc.types.array)
+    function setKeys(keys as sc.types.array, keyValues as sc.types.array)
       if not sc.isArray(keys)
         m.log.error("received invalid keys", keys)
       end if
@@ -546,7 +546,7 @@ namespace sv.animations
     public delay = 0
     public animateFromCurrentValue = false 'if true, the animation will always take the current value, irrespective of from value
 
-    function new(target as mc.types.node, animations = invalid as mc.types.array, repeat = false as boolean, delay = 0 as float)
+    function new(target as sc.types.node, animations = invalid as sc.types.array, repeat = false as boolean, delay = 0 as float)
       super("ParallelAnimation", target)
       m.node = createObject("roSGNode", "ParallelAnimation")
       animId = sv.animations.getAnimationKeyId()
@@ -594,7 +594,7 @@ namespace sv.animations
     '++ public api
     '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-    function addAnimations(animations as mc.types.array)
+    function addAnimations(animations as sc.types.array)
       m.animations = []
       for each animation in animations
         if animation <> invalid and type(animation.node) = "roSGNode"
@@ -635,7 +635,7 @@ namespace sv.animations
   '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
   class Scale extends sv.animations.AbstractAnimation
-    function new(target as mc.types.node, duration as float, fromValue as mc.types.array, toValue as mc.types.array, delay = 0 as float)
+    function new(target as sc.types.node, duration as float, fromValue as sc.types.array, toValue as sc.types.array, delay = 0 as float)
       super(target, "scale", duration, fromValue, toValue, "ScaleAnimation", delay)
     end function
 
@@ -643,7 +643,7 @@ namespace sv.animations
       m._createInterpolator("Vector2DFieldInterpolator")
     end function
 
-    protected override function isValidValue(value as mc.types.array) as boolean
+    protected override function isValidValue(value as sc.types.array) as boolean
       return sc.isPoint(value)
     end function
 
@@ -654,7 +654,7 @@ namespace sv.animations
   end class
 
   class Fade extends sv.animations.AbstractAnimation
-    function new(target as mc.types.node, duration as float, fromValue as float, toValue as float, delay = 0 as float)
+    function new(target as sc.types.node, duration as float, fromValue as float, toValue as float, delay = 0 as float)
       super(target, "opacity", duration, fromValue, toValue, "FadeAnimation", delay)
     end function
 
@@ -672,7 +672,7 @@ namespace sv.animations
   end class
 
   class Color extends sv.animations.AbstractAnimation
-    function new(target as mc.types.node, duration as float, fromValue as float, toValue as float, delay = 0 as float)
+    function new(target as sc.types.node, duration as float, fromValue as float, toValue as float, delay = 0 as float)
       super(target, "opacity", duration, fromValue, toValue, "ColorAnimation", delay)
     end function
 
@@ -691,7 +691,7 @@ namespace sv.animations
   end class
 
   class Move extends sv.animations.AbstractAnimation
-    function new(target as mc.types.node, duration as float, fromValue as mc.types.array, toValue as mc.types.array, delay = 0 as float, keys = invalid as mc.types.array)
+    function new(target as sc.types.node, duration as float, fromValue as sc.types.array, toValue as sc.types.array, delay = 0 as float, keys = invalid as sc.types.array)
       super(target, "translation", duration, fromValue, toValue, "MoveAnimation", delay, keys)
     end function
 
@@ -699,7 +699,7 @@ namespace sv.animations
       m._createInterpolator("Vector2DFieldInterpolator")
     end function
 
-    protected override function isValidValue(value as mc.types.array) as boolean
+    protected override function isValidValue(value as sc.types.array) as boolean
       return sc.isPoint(value)
     end function
 
@@ -710,11 +710,11 @@ namespace sv.animations
   end class
 
   class Size extends sv.animations.AbstractAnimation
-    private wAnim as mc.types.node
-    private hAnim as mc.types.node
-    private pAnim as mc.types.node
+    private wAnim as sc.types.node
+    private hAnim as sc.types.node
+    private pAnim as sc.types.node
 
-    function new(target as mc.types.node, duration as float, fromValue as mc.types.array, toValue as mc.types.array, delay = 0 as float)
+    function new(target as sc.types.node, duration as float, fromValue as sc.types.array, toValue as sc.types.array, delay = 0 as float)
       super(target, "size", duration, fromValue, toValue, "SizeAnimation", delay)
       m.wAnim = new sv.animations.FloatValue(target, "width", duration, fromValue[0], toValue[0])
       m.hAnim = new sv.animations.FloatValue(target, "height", duration, fromValue[1], toValue[1])
@@ -739,7 +739,7 @@ namespace sv.animations
       m.hAnim.setEaseFunction(easeFunction)
     end function
 
-    override function setKeys(keys as mc.types.array, keyValues as mc.types.array)
+    override function setKeys(keys as sc.types.array, keyValues as sc.types.array)
       wKeys = []
       hKeys = []
       for each keyValue in keyValues
@@ -757,7 +757,7 @@ namespace sv.animations
       m.duration = duration
     end function
 
-    protected override function isValidValue(value as mc.types.array) as boolean
+    protected override function isValidValue(value as sc.types.array) as boolean
       return sc.isPoint(value)
     end function
 
@@ -796,11 +796,11 @@ namespace sv.animations
 
   class KenBurns extends sv.animations.AbstractAnimation
     private maxScale = 0.0
-    private mAnim as mc.types.node
-    private sAnim as mc.types.node
-    private pAnim as mc.types.node
+    private mAnim as sc.types.node
+    private sAnim as sc.types.node
+    private pAnim as sc.types.node
 
-    function new(target as mc.types.node, duration as float, maxScale as float, delay = 0 as float)
+    function new(target as sc.types.node, duration as float, maxScale as float, delay = 0 as float)
       super(target, "size", duration, invalid, invalid, "SizeAnimation", delay)
       m.maxScale = maxScale
       m.sAnim = sv.animations.utils.scaleTo(target, duration, target.scale, false, delay)
@@ -825,7 +825,7 @@ namespace sv.animations
       m.mAnim.setEaseFunction(easeFunction)
     end function
 
-    override function setKeys(keys as mc.types.array, keyValues as mc.types.array)
+    override function setKeys(keys as sc.types.array, keyValues as sc.types.array)
     end function
 
     override function setDuration(duration as float)
@@ -936,7 +936,7 @@ namespace sv.animations
 
 
   class FloatValue extends sv.animations.AbstractAnimation
-    function new(target as mc.types.node, field as string, duration as float, fromValue as float, toValue as float, delay = 0 as float)
+    function new(target as sc.types.node, field as string, duration as float, fromValue as float, toValue as float, delay = 0 as float)
       super(target, field, duration, fromValue, toValue, "FloatAnimation", delay)
     end function
 
@@ -956,7 +956,7 @@ namespace sv.animations
 
 
   class VectorValue extends sv.animations.AbstractAnimation
-    function new(target as mc.types.node, field as string, duration as float, fromValue as mc.types.array, toValue as mc.types.array, delay = 0 as float)
+    function new(target as sc.types.node, field as string, duration as float, fromValue as sc.types.array, toValue as sc.types.array, delay = 0 as float)
       super(target, field, duration, fromValue, toValue, "VectorValueAnimation", delay)
     end function
 
@@ -964,7 +964,7 @@ namespace sv.animations
       m._createInterpolator("Vector2DFieldInterpolator")
     end function
 
-    protected override function isValidValue(value as mc.types.array) as boolean
+    protected override function isValidValue(value as sc.types.array) as boolean
       return sc.isPoint(value)
     end function
 
@@ -978,7 +978,7 @@ namespace sv.animations
   'achieves it by adding a float field to the target node
   class Generic extends sv.animations.AbstractAnimation
 
-    function new(target as mc.types.node, duration as float, delay = 0 as float)
+    function new(target as sc.types.node, duration as float, delay = 0 as float)
       super(target, "#ga_random", duration, 0, 1, "Generic", delay)
     end function
 
@@ -999,14 +999,14 @@ namespace sv.animations
   'special animation, which animates multiple views at once, based on view json
   class ViewJson extends sv.animations.AbstractAnimation
 
-    private fromJson as mc.types.assocarray
-    private toJson as mc.types.assocarray
-    private startMap as mc.types.assocarray
-    private toMap as mc.types.assocarray
-    private targetM as mc.types.assocarray
+    private fromJson as sc.types.assocarray
+    private toJson as sc.types.assocarray
+    private startMap as sc.types.assocarray
+    private toMap as sc.types.assocarray
+    private targetM as sc.types.assocarray
     private isObserving = false
 
-    function new(fromJson as mc.types.assocarray, toJson as mc.types.array, duration as float, delay = 0 as float)
+    function new(fromJson as sc.types.assocarray, toJson as sc.types.array, duration as float, delay = 0 as float)
       super(sc.getTop(), "#ga_random", duration, 0, 1, "ViewJson", delay)
       m.fromJson = fromJson
       m.toJson = toJson
@@ -1094,7 +1094,7 @@ namespace sv.animations
     public delay = 0
     public animateFromCurrentValue = false 'if true, the animation will always take the current value, irrespective of from value
 
-    function new(target as mc.types.node, animations = invalid as mc.types.array, repeat = false as boolean, delay = 0 as float)
+    function new(target as sc.types.node, animations = invalid as sc.types.array, repeat = false as boolean, delay = 0 as float)
       super("SequenceAnimation", target)
       m.node = createObject("roSGNode", "SequentialAnimation")
       animId = sv.animations.getAnimationKeyId()
@@ -1149,7 +1149,7 @@ namespace sv.animations
     '++ public api
     '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-    function addAnimations(animations as mc.types.array)
+    function addAnimations(animations as sc.types.array)
       m.animations = []
       for each animation in animations
         if animation <> invalid and type(animation.node) = "roSGNode"
@@ -1186,13 +1186,13 @@ namespace sv.animations
   end class
 
   class SimpleKenBurns extends sv.animations.AbstractAnimation
-    private sAnim as mc.types.node
-    private mAnim as mc.types.node
-    private pAnim as mc.types.node
+    private sAnim as sc.types.node
+    private mAnim as sc.types.node
+    private pAnim as sc.types.node
     private scale = [1, 1]
     private movement = [0, 0]
 
-    function new(target as mc.types.node, duration as float, scale as mc.types.array, movement as mc.types.array, delay = 0 as float)
+    function new(target as sc.types.node, duration as float, scale as sc.types.array, movement as sc.types.array, delay = 0 as float)
       super(target, "scale", duration, invalid, invalid, "SimpleKenBurnsAnimation", delay)
       m.scale = [scale, scale]
       m.movement = [target.width * movement[0], target.height * movement[1]]
@@ -1220,7 +1220,7 @@ namespace sv.animations
       m.mAnim.setEaseFunction(easeFunction)
     end function
 
-    override function setKeys(keys as mc.types.array, keyValues as mc.types.array)
+    override function setKeys(keys as sc.types.array, keyValues as sc.types.array)
     end function
 
     override function setDuration(duration as float)
