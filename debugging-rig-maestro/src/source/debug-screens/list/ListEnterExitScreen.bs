@@ -39,7 +39,7 @@ class ListEnterExitScreen extends mv.BaseScreen
   private focusSettings
   private cellSettings
   private loadingIndicator
-  private scrollSpeed = 0.3
+  private animSpeeds = [0.2, 0.1, 0.05]
   private numberItemsToRenderAfter = 4
   private numberItemsToRenderBefore = 2
 
@@ -120,7 +120,7 @@ class ListEnterExitScreen extends mv.BaseScreen
     listSettings.rowCreationStrategy = "async"
     listSettings.rowCreationBatchSize = 5
     listSettings.rowCreationBatchDelay = 0.3
-    listSettings.animSpeeds = [1]
+    listSettings.animSpeeds = m.animSpeeds
 
     listSettings.renderStrategy = "dynamic"
     ' listSettings.renderStrategy = "all"

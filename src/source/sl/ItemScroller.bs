@@ -608,7 +608,7 @@ namespace sl
       end if
 
       if not active
-        ?"  TOGGLE SCROLLING OFF!! STOPPING>!>!>!>!!>"
+        ' ?"  TOGGLE SCROLLING OFF!! STOPPING>!>!>!>!!>"
         m.setTargetCellInfo(invalid)
         m.moveAnimation.stop(false)
         m.isMovingMultiple = false

@@ -62,7 +62,7 @@
     "testsFilePattern": null
   },
   "rokuLog": {
-    "strip": false,
+    "strip": true,
     "insertPkgPath": true,
     "removeComments": true
   },
