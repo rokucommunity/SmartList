@@ -10,23 +10,23 @@ class UpdateListDataScreen extends mv.BaseScreen
   '++ Views
   '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-  private list as mc.types.node
-  private menu as mc.types.node
+  private list as sc.types.node
+  private menu as sc.types.node
 
   'buttons
-  private resetButton as mc.types.node
-  private reloadTodayButton as mc.types.node
-  private moveItemUpButton as mc.types.node
-  private dayBackButton as mc.types.node
-  private dayForwardButton as mc.types.node
-  private moveItemDownButton as mc.types.node
-  private useGridButton as mc.types.node
+  private resetButton as sc.types.node
+  private reloadTodayButton as sc.types.node
+  private moveItemUpButton as sc.types.node
+  private dayBackButton as sc.types.node
+  private dayForwardButton as sc.types.node
+  private moveItemDownButton as sc.types.node
+  private useGridButton as sc.types.node
 
   '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   '++ Private Fields
   '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-  public componentPool as mc.types.node
+  public componentPool as sc.types.node
   private contentId = 0
   private rowSettings
   private focusSettings
@@ -227,7 +227,7 @@ class UpdateListDataScreen extends mv.BaseScreen
     return items
   end function
 
-  private function makeItem(cellType as string, title as string) as mc.types.node
+  private function makeItem(cellType as string, title as string) as sc.types.node
     id = str(m.contentId).trim()
     child = m.createSGNode("Item", invalid, id, {
       json: {

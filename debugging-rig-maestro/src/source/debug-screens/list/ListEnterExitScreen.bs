@@ -33,22 +33,22 @@ class ListEnterExitScreen extends mv.BaseScreen
   private defaultCellType = "RowListCellForMaestroList"
 
   'state
-  public componentPool as mc.types.node
+  public componentPool as sc.types.node
   private contentId = 0
   private rowSettings
   private focusSettings
   private cellSettings
   private loadingIndicator
-  private animSpeeds = [0.2, 0.1, 0.05]
+  private animSpeeds = [0.3, 0.2, 0.1]
   private numberItemsToRenderAfter = 4
   private numberItemsToRenderBefore = 2
 
   ' private scrollSpeed = 4 'roku 2
-  private button as mc.types.node
-  private label as mc.types.node
-  private updateInfoTimeout as mc.types.node
+  private button as sc.types.node
+  private label as sc.types.node
+  private updateInfoTimeout as sc.types.node
   private isListLoaded = false
-  private listContent as mc.types.node
+  private listContent as sc.types.node
   private currentRowIndex = 0
 
   function new()
@@ -241,12 +241,12 @@ class ListEnterExitScreen extends mv.BaseScreen
   end function
 
 
-  private function onContentChange(change as mc.types.assocarray)
+  private function onContentChange(change as sc.types.assocarray)
     ? " SCREEN content change " change
   end function
 
 
-  private function onRowChange(change as mc.types.assocarray)
+  private function onRowChange(change as sc.types.assocarray)
     ? "SCREEN: ROW change " change
   end function
 
@@ -258,7 +258,7 @@ class ListEnterExitScreen extends mv.BaseScreen
     return items
   end function
 
-  private function makeItem(cellType as string, title as string) as mc.types.node
+  private function makeItem(cellType as string, title as string) as sc.types.node
     id = "I:" + m.contentId.toStr()
     child = m.createSGNode("Item", invalid, id, {
       json: {

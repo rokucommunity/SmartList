@@ -50,7 +50,7 @@ class SubHeroCell extends sl.BaseCell
     })
   end function
 
-  protected override function onContentChange(content as mc.types.node)
+  protected override function onContentChange(content as sc.types.node)
     m.label.text = "C:" + content.title
     m.label.visible = true
     m.poster.uri = content.HDGRIDPOSTERURL

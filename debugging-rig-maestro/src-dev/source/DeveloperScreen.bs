@@ -20,7 +20,7 @@ namespace main
       m.showScreen(m.createSGNode("ListEnterExitScreen"))
     end function
 
-    protected override function getMenuPageBuilderFunctions() as mc.types.array
+    protected override function getMenuPageBuilderFunctions() as sc.types.array
       return [
         m.getDefaultPage
         m.getPage0

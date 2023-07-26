@@ -9,20 +9,20 @@ class UpdateGridItemsScreen extends mv.BaseScreen
   '++ Views
   '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-  private list as mc.types.node
-  private menu as mc.types.node
+  private list as sc.types.node
+  private menu as sc.types.node
 
   'buttons
-  private listUpdateActiveButton as mc.types.node
-  private applyChangeButton as mc.types.node
-  private moveItemUpButton as mc.types.node
-  private moveItemDownButton as mc.types.node
+  private listUpdateActiveButton as sc.types.node
+  private applyChangeButton as sc.types.node
+  private moveItemUpButton as sc.types.node
+  private moveItemDownButton as sc.types.node
 
   '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   '++ Private Fields
   '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-  public componentPool as mc.types.node
+  public componentPool as sc.types.node
   private contentId = 0
   private rowSettings
   private focusSettings
@@ -36,10 +36,10 @@ class UpdateGridItemsScreen extends mv.BaseScreen
   private isRowSelectionMode = false
   private firstItem = invalid
   private dataIndex = 0
-  private selectedRow as mc.types.node
+  private selectedRow as sc.types.node
   private selectedRowIndex as integer
   private selectedItemIndex as integer
-  private selectedItem as mc.types.node
+  private selectedItem as sc.types.node
 
   private rows = []
 
@@ -191,7 +191,7 @@ class UpdateGridItemsScreen extends mv.BaseScreen
     return items
   end function
 
-  private function makeItem(cellType as string, title as string) as mc.types.node
+  private function makeItem(cellType as string, title as string) as sc.types.node
     id = str(m.contentId).trim()
     child = m.createSGNode("Item", invalid, id, {
       json: {

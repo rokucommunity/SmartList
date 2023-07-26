@@ -16,7 +16,7 @@ namespace sl
     public content as sc.types.node
 
     'TODO - might not be needed..
-    private contentItems as mc.types.array
+    private contentItems as sc.types.array
     private list as sl.List
     private listNode as sc.types.node
     private isUpdateEnabled = true
@@ -151,7 +151,7 @@ namespace sl
     '++ Private Methods
     '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-    private function getContentItems(content as mc.types.node)
+    private function getContentItems(content as sc.types.node)
       if content <> invalid
         'bs:disable-next-line
         if content.isSubType("mc_Node") or content.subType() = "mc_Node"

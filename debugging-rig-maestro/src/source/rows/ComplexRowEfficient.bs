@@ -24,7 +24,7 @@ class ComplextRowEfficient extends sl.BaseRow
   private button1
   private button2
   private poster
-  private label as mc.types.node
+  private label as sc.types.node
 
   function new()
     super()
@@ -64,7 +64,7 @@ class ComplextRowEfficient extends sl.BaseRow
     m.observe(m.button2.selected, function(): ? " REMOVE " : m.sendRowData({ action: "remove" }): end function, "none")
   end function
 
-  protected override function onContentUpdate(content as mc.types.node)
+  protected override function onContentUpdate(content as sc.types.node)
     m.log.info("ROW CHANGE")
     super.onContentUpdate(content)
     m.label.text = asString(content.rowText)

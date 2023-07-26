@@ -8,15 +8,15 @@ namespace sample
     '++ Views
     '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-    private poster as mc.types.node
-    private rectangle as mc.types.node
-    private label as mc.types.node
+    private poster as sc.types.node
+    private rectangle as sc.types.node
+    private label as sc.types.node
 
     '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     '++ Private Fields
     '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-    private styles as mc.types.assocarray
+    private styles as sc.types.assocarray
     private scale = 1.0
 
     '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -29,7 +29,7 @@ namespace sample
       m.createViewsFromStyleJson(bundle.views)
     end function
 
-    protected override function onContentChange(content as mc.types.node)
+    protected override function onContentChange(content as sc.types.node)
       m.label.text = sc.getString(content, "json.title")
       m.poster.uri = sc.getString(content, "json.posterUrl")
       m.label.visible = true
@@ -59,7 +59,7 @@ namespace sample
     end function
 
 
-    protected override function onShowWithContent(content as mc.types.node)
+    protected override function onShowWithContent(content as sc.types.node)
       m.toggleHighlighted(false)
     end function
 

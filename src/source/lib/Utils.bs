@@ -1,5 +1,5 @@
 import "pkg:/source/roku_modules/log/LogMixin.brs"
-import "pkg:/source/roku_modules/maestro/core/Global.brs"
+' import "pkg:/source/roku_modules/maestro/core/Global.brs"
 import "pkg:/source/lib/Types-Polyfill.bs"
 
 namespace sc

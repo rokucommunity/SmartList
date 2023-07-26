@@ -4,7 +4,7 @@ namespace models
   @node("Item", "ContentNode")
   class Item
 
-    public json as mc.types.assocarray
+    public json as sc.types.assocarray
 
     public version = 0
     public type = ""
@@ -18,14 +18,14 @@ namespace models
     '++ Serialization support
     '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-    public function serialize() as mc.types.assocarray
+    public function serialize() as sc.types.assocarray
       return {
         type: m.type
         json: m.json
       }
     end function
 
-    public function deserialize(data as mc.types.assocarray)
+    public function deserialize(data as sc.types.assocarray)
       m.json = data.json
       m.type = data.type
     end function
@@ -34,7 +34,7 @@ namespace models
     '++ Cloning
     '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-    protected function cloneCustomFieldsIntoNode(node as mc.types.node)
+    protected function cloneCustomFieldsIntoNode(node as sc.types.node)
       node.isSerializable = true
       node.type = m.top.type
     end function

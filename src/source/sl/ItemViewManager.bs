@@ -127,7 +127,7 @@ namespace sl
       end if
     end function
 
-    protected function getContentItems(content as mc.types.node)
+    protected function getContentItems(content as sc.types.node)
 
       if content <> invalid
         'bs:disable-next-line

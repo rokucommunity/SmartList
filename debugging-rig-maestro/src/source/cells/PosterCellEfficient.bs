@@ -4,8 +4,8 @@ import "pkg:/source/sl/cells/BaseCell.bs"
 @node("PosterCellEfficient", "sl_BaseCell")
 class PosterCellEfficient extends sl.BaseCell
 
-  private poster as mc.types.node
-  private label as mc.types.node
+  private poster as sc.types.node
+  private label as sc.types.node
 
   function new()
     super()
@@ -45,7 +45,7 @@ class PosterCellEfficient extends sl.BaseCell
     ' ? "CLEANUP"
   end function
 
-  protected override function onShowWithContent(content as mc.types.node)
+  protected override function onShowWithContent(content as sc.types.node)
     ' ? ">>  SHOW  onShowWithContent"
     m.setFocusState(1, false)
     m.poster.uri = m.content.HDGRIDPOSTERURL

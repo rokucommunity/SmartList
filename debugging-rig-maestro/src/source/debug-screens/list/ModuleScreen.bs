@@ -28,7 +28,7 @@ class ModuleScreen extends mv.BaseScreen
 
   private numberOfRows = 20
   private defaultCellType = "sl_SimpleCell"
-  public componentPool as mc.types.node
+  public componentPool as sc.types.node
   private contentId = 0
   private rowSettings
   private focusSettings
@@ -37,7 +37,7 @@ class ModuleScreen extends mv.BaseScreen
   private scrollSpeed = 2
   private firstItem = invalid
   private dataIndex = 0
-  private downInterval as mc.types.node
+  private downInterval as sc.types.node
   private nextMoveIsUp = false
 
   function new()
@@ -172,7 +172,7 @@ class ModuleScreen extends mv.BaseScreen
     return items
   end function
 
-  private function makeItem(cellType as string, title as string) as mc.types.node
+  private function makeItem(cellType as string, title as string) as sc.types.node
     id = rnd(2147483647).toStr()
     child = m.createSGNode("Item", invalid, id, {
       json: {
@@ -363,7 +363,7 @@ class ModuleScreen extends mv.BaseScreen
   '++ Key Presses
   '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-  private content as mc.types.node
+  private content as sc.types.node
   private function onKeyPressOptions() as boolean
 
     ? "RESETTING LIST"

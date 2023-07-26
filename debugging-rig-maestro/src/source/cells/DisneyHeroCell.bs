@@ -15,7 +15,7 @@ class DisneyHeroCell extends sl.BaseCell
     super()
   end function
 
-  private mask as mc.types.node
+  private mask as sc.types.node
   protected override function createViews() as void
 
     m.bgRect = sc.createSGNode("mv_Rectangle", m.top, "textRect", {
@@ -41,7 +41,7 @@ class DisneyHeroCell extends sl.BaseCell
     })
   end function
 
-  protected override function onShowWithContent(content as mc.types.node)
+  protected override function onShowWithContent(content as sc.types.node)
     m.poster.width = m.size[0]
     m.poster.height = m.size[1]
     m.setFocusState(0, true, 1)

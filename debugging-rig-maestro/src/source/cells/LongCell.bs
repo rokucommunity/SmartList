@@ -8,9 +8,9 @@ import "pkg:/source/lib/Animation.bs"
 
 @node("LongCell", "sl_BaseCell")
 class LongCell extends sl.BaseCell
-  private poster as mc.types.node
-  private bgRect as mc.types.node
-  private label as mc.types.node
+  private poster as sc.types.node
+  private bgRect as sc.types.node
+  private label as sc.types.node
 
   function new()
     super()
@@ -42,7 +42,7 @@ class LongCell extends sl.BaseCell
     })
   end function
 
-  protected override function onShowWithContent(content as mc.types.node)
+  protected override function onShowWithContent(content as sc.types.node)
     ' ? " ON SHOW WITH CONTENT " m.index
     m.poster.uri = content.HDGRIDPOSTERURL
     m.label.text = `${m.index} ${content.title}`
