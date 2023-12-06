@@ -14,6 +14,7 @@
     { "src": "../lib/source/**/*.*", "dest": "source" },
     { "src": "!../lib/source/**/Global.bs" },
     { "src": "../lib/components/**/*.*", "dest": "components" },
+    { "src": "../lib/components/**/*.*", "dest": "components" },
     { "src": "../src-prod/source/**/*.*", "dest": "source" },
     "!../lib/**/*.spec.bs",
     "!../src-dev/**/*.spec.bs",

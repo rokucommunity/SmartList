@@ -130,8 +130,20 @@ namespace sl
     protected function getContentItems(content as sc.types.node)
 
       if content <> invalid
+        'HACK
+        'HACK
+        'HACK
+        'HACK
+        'HACK
+        'HACK
+        'HACK
+        'HACK
+        'HACK
+        'NOTE - we are not using the sl_node style of adding children right now..
+        m.log.warn("using sl_node style content is disabled")
+
         'bs:disable-next-line
-        if content.isSubType("mc_Node") or content.subType() = "mc_Node"
+        if false and content.isSubType("sl_node") or content.subType() = "sl_node"
           return content@.getChildren()
         else
           return content.getChildren(-1, 0)

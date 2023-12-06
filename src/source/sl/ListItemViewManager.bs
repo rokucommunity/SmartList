@@ -131,14 +131,15 @@ namespace sl
         m.log.verbose("BATCHING: creating", m.creationIndex, "to", m.creationIndex + m.batchSize)
 
         for i = 0 to m.batchSize
-          'm.log.increaseIndent()Indent("BEGIN CREATE ROW" + i.toStr())
+          m.log.increaseIndent()
+          m.log.info("BEGIN CREATE ROW" + i.toStr())
           m.creationIndex++
           index = m.creationIndex
           if m.creationIndex >= m.contentItems.count()
             m.log.verbose("finished creating all renderers")
 
             m.onRenderersCreated()
-            'm.log.decreaseIndent()
+            m.log.decreaseIndent()
             return
           end if
           rowContent = m.contentItems[index]

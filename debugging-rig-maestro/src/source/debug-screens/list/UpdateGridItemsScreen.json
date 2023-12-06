@@ -13,7 +13,7 @@
     },
     {
       "id": "list",
-      "_type": 'sl_List",
+      "_type": "sl_List",
       "translation": [0, 100],
       "width": 1920,
       "heigh": 980

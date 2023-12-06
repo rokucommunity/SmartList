@@ -1,0 +1,69 @@
+<?xml version='1.0' encoding='utf-8'?>
+<component
+    name='sl_RowSettings'
+    extends='ContentNode'>
+  <interface>
+    <field
+        id='componentName'
+        type='string' />
+    <field
+        id='headerSettings'
+        type='node' />
+    <field
+        id='focusSettings'
+        type='node' />
+    <field
+        id='cellSettings'
+        type='node' />
+    <field
+        id='contentOffset'
+        type='floatarray'
+        value='[0,0]' />
+    <field
+        id='space'
+        type='integer'
+        value='0' />
+    <field
+        id='screenPos'
+        type='integer'
+        value='-1' />
+    <field
+        id='peekNextPixels'
+        type='integer'
+        value='0' />
+    <field
+        id='height'
+        type='integer'
+        value='-1' />
+    <field
+        id='isHiddenWhenEmpty'
+        type='boolean' />
+    <field
+        id='propagateScroll'
+        type='boolean'
+        value='false' />
+    <field
+        id='propagateScrollUpdate'
+        type='boolean'
+        value='false' />
+    <field
+        id='numberItemsToRenderBefore'
+        type='integer'
+        value='4' />
+    <field
+        id='numberItemsToRenderAfter'
+        type='integer'
+        value='4' />
+    <field
+        id='allowLongPress'
+        type='boolean'
+        value='true' />
+    <field
+        id='renderStrategy'
+        type='string'
+        value='dynamic' />
+  </interface>
+  <script
+      type='text/brightscript'
+      uri='pkg:/source/roku_modules/rokucommunity_bslib/bslib.brs' />
+</component>

@@ -455,7 +455,7 @@ namespace sv.animations
       m.node.keyFraction = m.keyFraction
       ' ? " FRACTION " fraction " ( in key " m.keyFraction " ) keyIndex " m.keyIndex
 
-      if m.keyFraction >= 1
+      if m.keyFraction >= 1 
         m.moveToNextKey()
       end if
     end function

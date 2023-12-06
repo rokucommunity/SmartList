@@ -1,0 +1,42 @@
+<?xml version='1.0' encoding='utf-8'?>
+<component
+    name='sl_FocusSettings'
+    extends='ContentNode'>
+  <interface>
+    <field
+        id='animSpeeds'
+        type='array'
+        value='[0.1,0.05, 0.02]' />
+    <field
+        id='horizAnimStyle'
+        type='string'
+        value='fixed' />
+    <field
+        id='canLongPress'
+        type='boolean'
+        value='true' />
+    <field
+        id='vertAnimStyle'
+        type='string'
+        value='fixed' />
+    <field
+        id='feedbackStyle'
+        type='string'
+        value='onTop' />
+    <field
+        id='feedbackUri'
+        type='string'
+        value='pkg:/images/input-focusrect.9.png' />
+    <field
+        id='feedbackColor'
+        type='string'
+        value='#ffffff' />
+    <field
+        id='feedbackOffsets'
+        type='array'
+        value='[0,0,0,0]' />
+  </interface>
+  <script
+      type='text/brightscript'
+      uri='pkg:/source/roku_modules/rokucommunity_bslib/bslib.brs' />
+</component>

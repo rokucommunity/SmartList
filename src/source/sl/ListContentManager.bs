@@ -46,7 +46,6 @@ namespace sl
     end function
 
     public function setContent(content as sc.types.node, forceUpdate = false as boolean) as void
-
       m.contentItems = m.getContentItems(content)
 
       m.toggleContentObserver(false)
@@ -57,13 +56,14 @@ namespace sl
         m.content = content
         m.listNode.content = content
         m.list.cleanup()
-        ' ? " LCM RENDERING SET CONTENT INVALID"
+        ? " LCM RENDERING SET CONTENT INVALID"
         m.setListRendering(false)
         return
       end if
 
       m.list.contentGroup.visible = false
 
+      ? " LCM RENDERING SET CONTENT"
       m.setListRendering(true)
       previousContent = m.content
 
@@ -154,7 +154,7 @@ namespace sl
     private function getContentItems(content as sc.types.node)
       if content <> invalid
         'bs:disable-next-line
-        if content.isSubType("mc_Node") or content.subType() = "mc_Node"
+        if content.isSubType("sl_node") or content.subType() = "sl_node"
           return content@.getChildren()
         else
           return content.getChildren(-1, 0)
@@ -206,6 +206,7 @@ namespace sl
 
       m.executeListFocus(newIndices[0], newIndices[1])
       m.list._setIndices(newIndices[0], newIndices[1])
+      ? "LCM Disbling rendering"
       m.setListRendering(false)
       m.log.info("list is now focused on", formatJson(newIndices))
 
@@ -320,7 +321,7 @@ namespace sl
         newRowInfo = m.viewManager.getCellInfoForContentIndex(rowIndex)
         if newRowInfo <> invalid
           content = m.contentItems[rowIndex]
-          if content.isHidden or not content.isFocusEnabled
+          if content <> invalid and (content.isHidden or not content.isFocusEnabled)
             m.log.verbose("chosen content is no longer focusable")
             rowIndex = m.getValidRowIndexAfter(rowIndex)
             m.log.verbose("next which is focusable, is at index", rowIndex)
@@ -434,7 +435,7 @@ namespace sl
         row@.recycle(content)
       end if
 
-      ? "::::::::::::: ADD OBSERVER"
+      ' ? "::::::::::::: ADD OBSERVER"
       m.toggleRowContentObserver(content, true)
       m.applyRowContentChange(row, content, result)
 

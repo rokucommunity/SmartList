@@ -1,0 +1,19 @@
+<?xml version='1.0' encoding='utf-8'?>
+<component
+    name='sl_ListContent'
+    extends='sl_node'>
+
+  <interface>
+    <field
+        id='listSettings'
+        type='node' />
+
+    <field
+        id='rowSettings'
+        type='node' />
+
+    <field
+        id='focusSettings'
+        type='node' />
+  </interface>
+</component>

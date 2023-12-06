@@ -13,7 +13,7 @@
     "components/**/*.*",
     "source/tests/**/*.*",
     { "src": "../lib/source/**/*.*", "dest": "source" },
-    { "src": "!../lib/source/**/Global.bs" },
+    { "src": "!../lib/source/**/Global.bs", "dest": "" },
     { "src": "../lib/components/**/*.*", "dest": "components" },
     { "src": "../src-dev/source/**/*.*", "dest": "source" }
   ],

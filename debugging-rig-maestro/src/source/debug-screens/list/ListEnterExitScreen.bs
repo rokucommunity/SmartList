@@ -242,12 +242,12 @@ class ListEnterExitScreen extends mv.BaseScreen
 
 
   private function onContentChange(change as sc.types.assocarray)
-    ? " SCREEN content change " change
+    ' ? " SCREEN content change " change
   end function
 
 
   private function onRowChange(change as sc.types.assocarray)
-    ? "SCREEN: ROW change " change
+    ' ? "SCREEN: ROW change " change
   end function
 
   private function makeItems(cellType as string, number as integer, prefix = "Item" as string)

@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<component name='sl_HeaderSettings' extends='ContentNode'>
+    <interface>
+        <field id='compName' type='string' value='ml_RowHeader' />
+        <field id='position' value='onTop' type='string' />
+        <field id='height' type='integer' value='50' />
+        <field id='labelOffset' type='array' value='[0,0]' />
+        <field id='fontKey' value='mediumBold,30' type='string' />
+        <field id='textColor' value='#ffffff' type='string' />
+        <field id='backgroundColor' value='#000000' type='string' />
+        <field id='backgroundOpacity' value='0.8' type='string' />
+        <field id='backgroundVisible' value='false' type='boolean' />
+        <field id='labelSettings' type='assocarray' />
+    </interface>
+    <script type="text/brightscript" uri="pkg:/source/roku_modules/rokucommunity_bslib/bslib.brs" />
+</component>

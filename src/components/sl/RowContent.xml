@@ -1,0 +1,20 @@
+<component
+    name='sl_RowContent'
+    extends='sl_node'>
+  <interface>
+    <field
+        id='title'
+        type='string' />
+    <field
+        id='settings'
+        type='node' />
+    <field
+        id='isHidden'
+        type='boolean'
+        value='false' />
+    <field
+        id='isFocusEnabled'
+        type='boolean'
+        value='true' />
+  </interface>
+</component>
