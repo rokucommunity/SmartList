@@ -1,0 +1,65 @@
+import "pkg:/source/view/BaseView.bs"
+import "pkg:/source/sl/common/SLApi.bs"
+namespace sl
+
+  @observersWaitInitialize
+  @node("sl_BreadCrumbView", "mv_BaseView")
+  class SLBreadCrumbView extends mv.BaseView
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Views
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    private poster as mc.types.node
+    private label as mc.types.node
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Private Fields
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    private content as mc.types.node
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Initialization
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    function new()
+      super("GCBreadCrumbView")
+    end function
+
+    protected override function initialize()
+      super.initialize()
+      m.createViews()
+      m.setContent(invalid)
+    end function
+
+    private function createViews()
+      m.createUi([
+        mv_Poster({
+          id: "poster"
+          uri: "pkg:/images/home/logo-roku-$$RES$$.png"
+          translation: [100, 70]
+          size: [135, 44]
+        })
+        mv_Label({
+          id: "label"
+          fontKey: "medium,30"
+          color: "#ffffff"
+          vertAlign: "center"
+          translation: [286, 73]
+          size: [400, 44]
+        })
+      ])
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Public Methods
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    function setContent(content as mc.types.node)
+      m.content = content
+      m.label.text = asString(content.title)
+    end function
+
+  end class
+end namespace

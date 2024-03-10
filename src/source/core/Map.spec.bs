@@ -1,0 +1,65 @@
+import "pkg:/source/tests/BaseTestSuite.spec.bs"
+
+namespace tests
+
+  @suite("Map tests")
+  class MapTests extends tests.BaseTestSuite
+
+    private map
+
+    protected override function setup()
+      super.setup()
+      m.map = createObject("roSGNode", "mc_Map")
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    @describe("basic scenarios")
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    @it("sets")
+    function _()
+      m.map@.set("a", 1)
+      m.assertEqual(m.map.length, 1)
+      m.assertEqual(m.map@.get("a"), 1)
+    end function
+
+    @it("gets")
+    function _()
+      m.map@.set("b", 2)
+      m.assertEqual(m.map.length, 2)
+      m.assertEqual(m.map@.get("a"), 1)
+      m.assertEqual(m.map@.get("b"), 2)
+    end function
+
+    @it("gets values")
+    function _()
+      m.assertEqual(m.map@.getAA(), { "a": 1, "b": 2 })
+    end function
+
+    @it("removes")
+    function _()
+      m.map@.set("c", 3)
+      m.assertEqual(m.map.length, 3)
+      m.assertEqual(m.map@.get("a"), 1)
+      m.assertEqual(m.map@.get("b"), 2)
+      m.assertEqual(m.map@.get("c"), 3)
+
+      m.map@.remove("b")
+      m.assertEqual(m.map.length, 2)
+      m.assertEqual(m.map@.get("a"), 1)
+      m.assertEqual(m.map@.get("b"), invalid)
+      m.assertEqual(m.map@.get("c"), 3)
+
+      m.map@.remove("a")
+      m.assertEqual(m.map.length, 1)
+      m.assertEqual(m.map@.get("a"), invalid)
+      m.assertEqual(m.map@.get("b"), invalid)
+      m.assertEqual(m.map@.get("c"), 3)
+
+      m.map@.remove("c")
+      m.assertEqual(m.map.length, 0)
+      m.assertEqual(m.map@.getAA(), {})
+    end function
+
+  end class
+end namespace

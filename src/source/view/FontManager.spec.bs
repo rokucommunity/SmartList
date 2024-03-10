@@ -1,0 +1,90 @@
+import "pkg:/source/tests/ViewBaseTestSuite.spec.bs"
+import "pkg:/source/view/FontManager.bs"
+
+namespace tests
+  @suite("FontManager tests")
+  class FontManagerTests extends mv.tests.BaseTestSuite
+
+    private manager
+
+    protected override function beforeEach()
+      m.manager = new mv.FontManager()
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    @describe("tests getFont")
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    @it("handles bad values")
+    @params("notThere")
+    function _(name)
+      font = m.manager.getFont(name, 20)
+      m.assertInvalid(font)
+    end function
+
+    '/* cspell:disable *\
+    @it("gets filesystem fonts")
+    @params("HelveticaNeue.ttf", 20)
+    @params("HelveticaNeue.ttf", 30)
+    @params("HelveticaNeue.ttf", 50)
+    @params("HelveticaNeue.ttf", 30)
+    @params("HelveticaNeue.ttf", 30)
+    function _(name, size)
+      '/* cspell:enable *\
+      font = m.manager.getFont(name, size)
+      m.assertEqual(font.uri, "pkg:" + "/fonts/" + name)
+      m.assertEqual(font.size, size)
+      m.assertSubType(font, "Font")
+    end function
+
+    @it("gets system fonts")
+    @params("Smallest", 20)
+    @params("SmallBold", 30)
+    @params("MediumBold", 50)
+    @params("Medium", 30)
+    @params("LargeBold", 30)
+    function _(name, size)
+      font = m.manager.getFont(name, size)
+      m.assertEqual(font.size, size, "font manager will create system fonts, which have no uri; but they _should_ be the correct size")
+      m.assertSubType(font, "Font")
+    end function
+
+    @it("caches font values")
+    function _()
+      '/* cspell:disable *\
+      m.manager.getFont("HelveticaNeue.ttf", 30)
+      m.manager.getFont("HelveticaNeue.ttf", 30)
+      m.manager.getFont("HelveticaNeue.ttf", 30)
+      m.manager.getFont("HelveticaNeue.ttf", 30)
+      m.manager.getFont("HelveticaNeue.ttf", 40)
+      m.assertAAHasKey(m.manager.cachedFonts, "HelveticaNeue.ttf,30")
+      m.assertAAHasKey(m.manager.cachedFonts, "HelveticaNeue.ttf,30")
+      m.assertAAHasKey(m.manager.cachedFonts, "HelveticaNeue.ttf,40")
+
+      m.manager.registry = { "id": "manager.fontRegistry" }
+
+      m.expectNone(m.manager.registry, "getFont")
+
+      m.assertSubType(m.manager.getFont("HelveticaNeue.ttf", 30), "Font")
+      m.assertSubType(m.manager.getFont("HelveticaNeue.ttf", 30), "Font")
+      m.assertSubType(m.manager.getFont("HelveticaNeue.ttf", 30), "Font")
+      m.assertSubType(m.manager.getFont("HelveticaNeue.ttf", 30), "Font")
+      m.assertSubType(m.manager.getFont("HelveticaNeue.ttf", 40), "Font")
+      '/* cspell:enable *\
+    end function
+
+    @it("return tmp language path specific path")
+    @params("tmp:/fonts/HelveticaNeue.ttf", 20)
+    @params("tmp:/fonts/HelveticaNeue.ttf", 30)
+    @params("tmp:/fonts/HelveticaNeue.ttf", 50)
+    @params("tmp:/fonts/HelveticaNeue.ttf", 30)
+    @params("tmp:/fonts/HelveticaNeue.ttf", 30)
+    function _(name, size)
+      '/* cspell:enable *\
+      font = m.manager.getFont(name, size)
+      m.assertEqual(font.uri, name)
+      m.assertEqual(font.size, size)
+      m.assertSubType(font, "Font")
+    end function
+  end class
+end namespace

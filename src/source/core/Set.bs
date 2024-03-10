@@ -1,0 +1,71 @@
+' /**
+'  * @member Dictionary
+'  * @memberof module:Set
+'  * @instance
+'  * @function
+'  * @description light node wrapper around a Set to stop copies
+'  */
+namespace mc.collections
+  @node("mc_Set", "Node")
+  class Set
+
+    protected data = []
+
+    public length = 0
+
+    @observer("onDebugChange")
+    public _debug = false
+
+    public __contents as mc.types.array
+
+    public function clear()
+      m.data = {}
+      m.top.length = 0
+      m.top._debug = invalid
+    end function
+
+    public function add(value as dynamic)
+      index = m.getIndex(value)
+      if index <> -1
+        m.data.remove(index)
+      end if
+      m.data.push(value)
+      m.top.length = m.data.count()
+    end function
+
+    public function append(other as mc.types.node)
+      m.data.append(other)
+      m.top.length = m.data.count()
+    end function
+
+    public function get(index as integer) as dynamic
+      return m.data[index]
+    end function
+
+    public function remove(index as integer)
+      m.data.delete(index)
+      m.top.length = m.data.count()
+    end function
+
+    public function hasValue(value as dynamic) as boolean
+      return m.getIndex(value) <> -1
+    end function
+
+    public function getIndex(value as dynamic) as integer
+      for i = 0 to m.data.count() - 1
+        if m.data[i] = value
+          return i
+        end if
+      end for
+      return -1
+    end function
+
+    public function getValues()
+      return m.data
+    end function
+
+    private function onDebugChange(value as dynamic)
+      m.top.__contents = m.data
+    end function
+  end class
+end namespace

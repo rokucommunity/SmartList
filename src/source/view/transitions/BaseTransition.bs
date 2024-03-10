@@ -1,0 +1,119 @@
+import "pkg:/source/roku_modules/log/LogMixin.brs"
+import "pkg:/source/core/Tasks.bs"
+import "pkg:/source/core/MIOC.bs"
+import "pkg:/source/view/NodeClass.bs"
+import "pkg:/components/view/mixin/FocusMixin.bs"
+
+namespace mv.transitions
+  ' /**
+  '  * @module BaseTransition
+  '  * @description BaseTransition component. extend this to create other transitions
+  '  */
+  class BaseTransition extends mv.NodeClass
+
+    private top as mc.types.node
+    public progress = 0.0
+
+    protected source as mc.types.node
+    protected target as mc.types.node
+    protected owner as mc.types.node
+
+    function new(name as string)
+      super(name)
+    end function
+
+    public function execute(owner as mc.types.node, source as mc.types.node, target as mc.types.node, animated = true as boolean)
+      m.owner = owner
+      m.source = source
+      m.target = target
+      m.top.progress = 0
+      m.top.state = "started"
+
+      if m.target <> invalid
+        m.target@.onAddedToAggregateView(owner)
+        'we want to clear out the view's vis, so the initialize
+        'won't trigger show callbacks prematurely
+        m.target.visible = false
+        m.target.isShown = false
+
+        if not m.target.isInitialized
+          m.initializeView(m.target)
+        end if
+      end if
+
+      if m.owner.isSettingCurrentViewOnViewStackChange or m.owner.currentView = invalid
+        m.owner.currentView = m.target
+      end if
+      if animated = true
+        m.begin()
+      else
+        m.transitionWithoutAnimation()
+      end if
+    end function
+
+    protected function begin()
+      'override me
+    end function
+
+    protected function finish()
+      m.top.progress = 1
+      m.top.state = "finished"
+
+      if m.source <> invalid and m.owner.shouldRemoveFromAggregateView
+        m.source@.onRemovedFromAggregateView(m.owner)
+        if m.owner.pushedView <> invalid
+          m.owner.pushedView = invalid
+        end if
+      end if
+
+      if m.target <> invalid
+        'bs:disable-next-line
+        if m.owner.isAutoFocusEnabled and (m.owner.isFocused or m.owner.isChildFocused)
+          m.log.info("BASE TRANSITION FOCUS")
+
+          mv.setFocus(m.owner.currentView)
+          if m.owner.poppedView <> invalid
+            m.owner.poppedView = invalid
+          end if
+        end if
+      end if
+    end function
+
+    protected function initializeView(view as mc.types.node, args = invalid as mc.types.assocarray)
+      if view <> invalid and view.isInitialized <> true
+        view@._initialize(args)
+      else
+        m.log.error("view is invalid!")
+      end if
+    end function
+
+    protected function transitionWithoutAnimation()
+      m.log.info("doing transition without animation")
+
+      if m.source <> invalid and not m.source.isSameNode(m.target)
+        if m.owner.isTransitionManagingChildren
+          m.source@._setShown(false)
+          m.owner.removeChild(m.source)
+        else
+          m.owner@.onTransitionRemoveChild(m.source)
+        end if
+      end if
+
+      if m.target <> invalid
+        if m.owner.isTransitionManagingChildren
+          m.owner.appendChild(m.target)
+        else
+          m.owner@.onTransitionAppendChild(m.target)
+        end if
+
+        if m.owner.isShown
+          m.target@._setShown(true)
+        end if
+
+      end if
+
+      m.finish()
+    end function
+
+  end class
+end namespace

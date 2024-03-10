@@ -1,0 +1,134 @@
+import "pkg:/source/core/Utils.bs"
+import "pkg:/source/view/ViewUtils.bs"
+import "pkg:/source/view/NodeClass.bs"
+
+namespace sl.collectionView
+  @node("sl_BaseCell", "Group")
+  class BaseCell extends mv.NodeClass
+
+    index as integer = -1
+
+    content as mc.types.node
+
+    protected list as mc.types.node
+    private cellSize = [320, 240]
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Views
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    protected titleLabel as mc.types.node
+    private poster as mc.types.node
+    ' private label as mc.types.node
+    ' private backgroundRectangle as mc.types.node
+
+    function new()
+      super("BaseCell")
+      m.createViews()
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Public Methods
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    function recycle()
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ callbacks
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    function setContent(content as mc.types.node, row as mc.types.node) as void
+      if row <> invalid
+        m.cellSize = row.cellSize
+      else
+        ' ? " NO ROW!!"
+        m.cellSize = [320, 240]
+      end if
+
+      if m.content <> invalid and m.content.isSameNode(content)
+        return
+      end if
+
+      if m.content <> invalid
+        m.unobserve(m.content.title, m.onTitleChange)
+      end if
+
+      m.content = content
+
+      if m.content <> invalid
+        m.observe(m.content.title, m.onTitleChange)
+        ' ? " SETTING URL " content.SDPosterUrl " cs " m.cellSize
+        'FIXME - maybe cache cells here?
+        m.poster.setFields({
+          "size": m.cellSize
+          "loadWidth": m.cellSize[0]
+          "loadHeight": m.cellSize[1]
+          "scaleRotateCenter": [m.cellSize[0] / 2, m.cellSize[1] / 2]
+        })
+
+        if content.id = "dummy"
+          m.poster.uri = "pkg:/images/tiles/loading.png"
+          m.poster.visible = true
+          m.titleLabel.text = ""
+        else
+          m.poster.uri = content.SDPosterUrl
+          m.poster.visible = true
+          m.titleLabel.translation = [0, m.cellSize[1] / 2]
+          m.titleLabel.text = content.title
+        end if
+      else
+        m.poster.setFields({
+          "size": m.cellSize
+          "loadWidth": m.cellSize[0]
+          "loadHeight": m.cellSize[1]
+          "scaleRotateCenter": [m.cellSize[0] / 2, m.cellSize[1] / 2]
+        })
+        m.poster.uri = "pkg:/images/tiles/loading.png"
+        m.poster.visible = true
+        m.titleLabel.text = ""
+      end if
+    end function
+
+    private function onTitleChange(title as string)
+      m.titleLabel.text = title
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ abstract methods
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    protected function createViews()
+      w = m.cellSize[0]
+      h = m.cellSize[1]
+      views = [
+        {
+          "id": "poster"
+          "_type": "mv_Poster"
+          "size": [w, h]
+          "translation": [0, 0]
+          "loadSync": false
+          "loadDisplayMode": "scaleToFit"
+          "loadWidth": w
+          "loadHeight": h
+          "scaleRotateCenter": [w / 2, h / 2]
+          "failedBitmapUri": "pkg:/images/tiles/loading.png"
+          "loadingBitmapUri": "pkg:/images/tiles/loading.png"
+          "uri": "pkg:/images/tiles/loading.png"
+        },
+        {
+          "id": "titleLabel"
+          "_type": "mv_Label"
+          "translation": [w / 2, h / 2]
+          "size": [w, 100]
+          "fontKey": "mediumBold,150"
+          "color": "#000000"
+          "horizAlign": "center"
+          "vertlign": "center"
+        }
+      ]
+      m.createViewsFromStyleJson(views)
+    end function
+
+  end class
+end namespace

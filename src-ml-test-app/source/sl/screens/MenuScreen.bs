@@ -1,0 +1,137 @@
+import "pkg:/source/sl/common/SLApi.bs"
+import "pkg:/source/sl/screens/BaseScreen.bs"
+
+namespace sl.screens
+
+  @observersWaitInitialize
+  @node("sl_MenuScreen", "mv_BaseScreen")
+  class MenuScreen extends sl.screens.BaseScreen
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Events
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Public Fields
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Views
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    private controlsGroup as mc.types.node
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Private Fields
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    private focusedItem as mc.types.node
+    private content as mc.types.node
+    private focusedIndex as integer
+    private selectedIndex as integer
+    private selectedItem as mc.types.node
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Initialization
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    function new()
+      super("MenuScreen")
+    end function
+
+    protected override function initialize()
+      super.initialize()
+      m.log.info("initializine menu screen")
+
+      m.createViews()
+    end function
+
+    private function createViews()
+      m.createFragment([
+        {
+          _type: "mv_ControlsGroup"
+          id: "controlsGroup"
+          translation: [0, 250]
+          layoutMode: "vert"
+          keyDirection: "vert"
+          horizAlign: "left"
+          itemSpacings: [5]
+      }], m.top, invalid, true)
+      m.focusedControl = m.controlsGroup
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Public Methods
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    function setContent(content as mc.types.node)
+      m.log.info("Creating menu items with content", content.id)
+      m.content = content
+      buttons = []
+      for each item in content.getChildren(-1, 0)
+        buttons.push(m.createSGNode("mv_Button", m.controlsGroup, item.title, {
+          text: item.title
+          size: [524, 71]
+          ' styleKey: "controls.Button.menu"
+          styleKey: "controls.Button.main-menu"
+          ' "iconStyle": "controls.icons.small-circle"
+          "iconStyle": {
+            "normal": {
+              "blendColor": "#4A0E9C"
+              "size": [38, 38]
+              "translation": [25, 14]
+              "uri": "pkg:/images/home/circle-icon.png"
+            }
+            "focused": {
+              "blendColor": "#ffffff"
+            }
+          }
+          "iconPosition": "left"
+        }))
+      end for
+      m.controlsGroup.appendChildren(buttons)
+      m.controlsGroup@.updateChildren()
+
+      m.observe(m.controlsGroup.selectedIndex, m.onControlsGroupSelectedIndex)
+      m.observe(m.controlsGroup.focusedIndex, m.onControlsGroupFocusedIndex)
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Callbacks
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    private function onControlsGroupSelectedIndex(index as integer)
+      if m.content <> invalid
+        m.log.info("Menu selected index change", index)
+
+        m.selectedIndex = index
+        m.executeSelection(m.createSelection(m.focusedItem, sl.common.SelectionAction.select))
+      end if
+    end function
+
+    private function onControlsGroupFocusedIndex(index as integer)
+      m.log.info("Menu focused index change", index)
+      if m.content <> invalid and index >= 0
+        m.focusedIndex = index
+        m.focusedItem = m.content.getChild(index)
+
+        'TODO - we could observe this and have a more general panel manager
+        m.executeSelection(m.createSelection(m.content.getChild(index), sl.common.SelectionAction.focus))
+      end if
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Key Presses
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    private function onKeyPressRight() as boolean
+      return m.onControlsGroupSelectedIndex(m.focusedIndex)
+    end function
+
+    protected override function onKeyPressBack() as boolean
+      return false
+    end function
+
+  end class
+end namespace

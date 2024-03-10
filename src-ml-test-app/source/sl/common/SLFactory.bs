@@ -1,0 +1,164 @@
+import "pkg:/source/view/ViewUtils.bs"
+import "pkg:/source/sl/common/SLApi.bs"
+
+namespace sl.common
+  class SLFactory
+    function createMenuItems()
+      content = createObject("roSGNode", "ContentNode")
+      content.update({
+        id: "SmartList"
+        subType: "ContentNode"
+        title: "SmartList r&d"
+        description: "Tests with smart list"
+        icon: "smartListIcon.png"
+        screenType: "sl_CollectionViewScreen"
+        children: [
+          {
+            id: sl.common.HomeScreenSection.grid
+            subType: "ContentNode"
+            title: "Home"
+            description: "Grid screen"
+            screenType: "sl_CollectionViewScreen"
+            viewMode: "root"
+            focusAction: "display"
+          },
+          {
+            id: sl.common.HomeScreenSection.rails
+            subType: "ContentNode"
+            title: "Horizontal rails"
+            icon: "rails.png"
+            screenType: "sl_CollectionViewScreen"
+            viewMode: "root"
+            focusAction: "display"
+          },
+          {
+            id: sl.common.HomeScreenSection.customRows
+            subType: "ContentNode"
+            title: "News"
+            icon: "live.png"
+            screenType: "sl_CollectionViewScreen"
+            viewMode: "root"
+            focusAction: "display"
+          },
+          {
+            id: sl.common.HomeScreenSection.mixedContent
+            subType: "ContentNode"
+            title: "Kids"
+            icon: "kids.png"
+            screenType: "sl_CollectionViewScreen"
+            viewMode: "root"
+            focusAction: "display"
+            backgroundImage: "pkg:/images/home/home-kids-$$RES$$.webp"
+          },
+          {
+            id: sl.common.HomeScreenSection.settings
+            subType: "ContentNode"
+            title: "Settings"
+            description: "Customize and configure your Roku experience."
+            icon: "settingsIcon.png"
+            screenType: "sl_MenuScreen"
+            viewMode: "root"
+            focusAction: "display"
+            children: [
+              {
+                id: sl.common.SettingsSection.network
+                subType: "ContentNode"
+                title: "Network"
+                description: "Manage your internet connections."
+                icon: "networkIcon.png"
+                screenType: "sl_MenuScreen"
+                viewMode: "subPanel"
+                focusAction: "display"
+              },
+              {
+                id: sl.common.SettingsSection.system
+                subType: "ContentNode"
+                title: "System"
+                description: "System settings and information."
+                icon: "systemIcon.png"
+                screenType: "sl_MenuScreen"
+                viewMode: "subPanel"
+                focusAction: "display"
+                children: [
+                  {
+                    id: "systemUpdate"
+                    subType: "ContentNode"
+                    title: "System Update"
+                    description: "Check for system updates."
+                    icon: "updateIcon.png"
+                    screenType: "sl_MenuScreen"
+                    viewMode: "subPanel"
+                    focusAction: "display"
+                  },
+                  {
+                    id: "time"
+                    subType: "ContentNode"
+                    title: "Time"
+                    description: "Set the time zone and clock format."
+                    icon: "timeIcon.png"
+                    screenType: "sl_MenuScreen"
+                    viewMode: "subPanel"
+                    focusAction: "display"
+                  }
+                ]
+              },
+              {
+                id: sl.common.SettingsSection.accessibility
+                subType: "ContentNode"
+                title: "Display Type"
+                description: "Adjust the display settings."
+                icon: "displayIcon.png"
+                screenType: "sl_MenuScreen"
+                viewMode: "subPanel"
+                focusAction: "display"
+              },
+              {
+                id: sl.common.SettingsSection.audio
+                subType: "ContentNode"
+                title: "Audio"
+                description: "Manage audio settings and modes."
+                icon: "audioIcon.png"
+                screenType: "sl_MenuScreen"
+                viewMode: "subPanel"
+                focusAction: "display"
+                children: [
+                  {
+                    id: "volumeModes"
+                    subType: "ContentNode"
+                    title: "Volume Modes"
+                    description: "Adjust volume settings for different environments."
+                    icon: "volumeIcon.png"
+                    screenType: "sl_MenuScreen"
+                    viewMode: "subPanel"
+                    focusAction: "display"
+                  }
+                ]
+              },
+              {
+                id: sl.common.SettingsSection.privacy
+                subType: "ContentNode"
+                title: "Privacy"
+                description: "Manage your privacy and data settings."
+                icon: "privacyIcon.png"
+                screenType: "sl_MenuScreen"
+                viewMode: "subPanel"
+                focusAction: "display"
+              },
+              {
+                id: sl.common.SettingsSection.paymentMethod
+                subType: "ContentNode"
+                title: "Parental Controls"
+                description: "Set up controls to manage what content can be accessed."
+                icon: "parentalControlsIcon.png"
+                screenType: "sl_MenuScreen"
+                viewMode: "subPanel"
+                focusAction: "display"
+              }
+            ]
+          }
+        ]
+      }, true)
+      return content
+    end function
+  end class
+end namespace

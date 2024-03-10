@@ -1,0 +1,61 @@
+import "pkg:/source/view/BaseView.bs"
+import "pkg:/source/sl/common/SLApi.bs"
+
+namespace sl
+
+  @observersWaitInitialize
+  @node("sl_HomeSidePanel", "mv_BaseView")
+  class HomeSidePanel extends mv.BaseView
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Views
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    private poster as mc.types.node
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Private Fields
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    private content as mc.types.node
+    private defaultBackgroundImage = "pkg:/images/home/side-panel-$$RES$$.png"
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Initialization
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    function new()
+      super("HomeSidePanel")
+    end function
+
+    protected override function initialize()
+      super.initialize()
+      m.createViews()
+      m.setContent(invalid)
+    end function
+
+    private function createViews()
+      m.createUI([
+        mv_Poster({
+          id: "poster"
+          translation: [0, 0]
+          size: [518, 700]
+        })
+      ])
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Public Methods
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    function setContent(content as mc.types.node)
+      m.content = content
+      if asString(content.backgroundImage) <> ""
+        m.poster.uri = content.backgroundImage
+      else
+        m.poster.uri = m.defaultBackgroundImage
+      end if
+    end function
+
+  end class
+end namespace

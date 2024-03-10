@@ -1,0 +1,130 @@
+namespace sl.collectionView
+  '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  '++ Changes
+  '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+  'TODO - turn into a bitmasked enum
+  enum ChangeResult
+    none = "none"
+    sizeInvalidated = "sizeInvalidated"
+    layoutInvalidated = "layoutInvalidated"
+    sizeAndLayoutInvalidated = "sizeAndLayoutInvalidated"
+    removed = "removed"
+  end enum
+
+  enum RowState
+    none = "none"
+    loading = "loading"
+    loadingMore = "loadingMore"
+    ready = "ready"
+    failed = "failed"
+  end enum
+
+  '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  '++ ChangeEvent
+  '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+  @optimize("should be interface")
+  class ContentChangeEvent
+    content as mc.types.node
+    changes as mc.types.array
+    result = sl.collectionView.ChangeResult.none
+
+    function new(content as mc.types.node, changes as mc.types.array)
+      m.content = content
+      m.changes = changes
+    end function
+  end class
+
+  '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  '++ Render Events
+  '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+  enum RenderEventReason
+    none = "none"
+    renderOnScreen = "renderOnScreen"
+    applyContentChanges = "applyContentChanges"
+  end enum
+
+  @optimize("should be interface")
+  class RenderEvent
+    reason as sl.collectionView.RenderEventReason
+    isForced as boolean
+
+    function new(reason = sl.collectionView.RenderEventReason.none as sl.collectionView.RenderEventReason, isForced = false as boolean)
+      m.reason = reason
+      m.isForced = isForced
+    end function
+  end class
+
+
+  @optimize("should be interface")
+  class ScreenRenderEvent extends sl.collectionView.RenderEvent
+    position as integer
+    virtualX as integer
+    virtualY as integer
+
+    function new(position as integer)
+      super(sl.collectionView.RenderEventReason.renderOnScreen)
+      m.position = position
+    end function
+  end class
+
+  class ApplyChangesRenderEvent extends sl.collectionView.RenderEvent
+    changes as mc.types.array
+
+    function new()
+      super(sl.collectionView.RenderEventReason.applyContentChanges)
+    end function
+  end class
+
+  '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  '++ Focus
+  '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+  enum FocusDisplayMode
+    none = "none"
+    onTop = "onTop"
+    behind = "behind"
+    auto = "auto"
+  end enum
+
+  interface FocusRequest
+    source as sl.collectionView.FocusSource
+    direction as integer
+    startIndex as integer
+    targetIndex as integer
+  end interface
+
+  class FocusInfo
+    private rowIndex as integer
+    private itemIndex as integer
+    private offset as mc.types.array
+    private size as mc.types.array
+    private imageUri as string
+    private color as string
+    private insets = [0, 0, 0, 0]
+    private displayMode = sl.collectionView.FocusDisplayMode.onTop
+
+    function new(rowIndex as integer, itemIndex as integer, offset as mc.types.array, size as mc.types.array, imageUri = "pkg:/images/input-focusrect.9.png" as string, color = "#ffffff" as string)
+      m.rowIndex = rowIndex
+      m.itemIndex = itemIndex
+      m.offset = offset
+      m.size = size
+      m.imageUri = imageUri
+      m.color = color
+    end function
+  end class
+
+  '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  '++ Settings
+  '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+  interface RowSettings
+    numCols as integer
+    margin as integer
+    padding as integer
+    cellSize as mc.types.array
+
+  end interface
+end namespace

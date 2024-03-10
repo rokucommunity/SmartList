@@ -1,0 +1,295 @@
+import "pkg:/source/tests/ViewBaseTestSuite.spec.bs"
+import "pkg:/source/view/controls/ControlsGroup.bs"
+
+namespace tests
+  @suite("ControlsGroup tests")
+  class ControlsGroupTests extends mv.tests.BaseTestSuite
+
+    private control
+
+    protected override function beforeEach()
+      super.beforeEach()
+      nodeTop = new rooibos.utils.MockNode("top")
+      m.control = m.createNodeClass(mv.controls.ControlsGroup, true, nodeTop, m.global)
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    @describe("initialize")
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    @it("updates child views")
+    function _()
+      m.expectOnce(m.control, "updateChildren", [])
+
+      m.control.initialize()
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    @describe("onLostFocus")
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    @it("redraws when losing focus")
+    function _()
+      m.expectOnce(m.control, "redraw", [])
+      m.control.onLostFocus()
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    @describe("onGainedFocus")
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    @it("redraws when gaining focus on self")
+    function _()
+      m.expectOnce(m.control, "redraw", [])
+      m.control.onGainedFocus(true)
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    @describe("onKeyPressUp")
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    @it("does nothing if in horizontal key mode")
+    function _()
+      m.control.keyDirection = "horiz"
+      m.expectNone(m.control, "updateIndex")
+      m.assertFalse(m.control.onKeypressUp())
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    @describe("onKeyPressDown")
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    @it("does nothing if in horizontal key mode")
+    function _()
+      m.control.keyDirection = "horiz"
+      m.expectNone(m.control, "updateIndex")
+      m.assertFalse(m.control.onKeypressDown())
+    end function
+
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    @describe("onKeyPressLeft")
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    @it("does nothing if in vertical key mode")
+    function _()
+      m.control.keyDirection = "vert"
+      m.expectNone(m.control, "updateIndex")
+      m.assertFalse(m.control.onKeypressLeft())
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    @describe("onKeyPressRight")
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    @it("does nothing if in vertical key mode")
+    function _()
+      m.control.keyDirection = "vert"
+      m.expectNone(m.control, "updateIndex")
+      m.assertFalse(m.control.onKeypressRight())
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    @describe("redraw")
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    @it("sets states correctly for focused index")
+    @params(false, true, 0, true, "focused", false, "none")
+    @params(false, false, 0, false, "none", false, "none")
+    @params(true, true, 0, true, "focused", false, "none")
+    @params(true, false, 0, false, "focused", false, "none")
+    @params(false, true, 1, false, "none", true, "focused")
+    @params(false, false, 1, false, "none", false, "none")
+    @params(true, true, 1, false, "none", true, "focused")
+    @params(true, false, 1, false, "none", false, "focused")
+    function _(useFootprint, isFocused, focusIndex, f1, fs1, f2, fs2)
+      c1 = { "id": "c1" }
+      c2 = { "id": "c2" }
+      m.control.visibleChildren = [c1, c2]
+
+      m.control.useFootprint = useFootprint
+      m.control.isFocused = isFocused
+      m.control.focusedIndex = focusIndex
+      m.control.redraw()
+    end function
+
+    @it("sets states correctly for selected index")
+    @params(false, true, 0, true, "focused", false, "none")
+    @params(false, false, 0, false, "none", false, "none")
+    @params(true, true, 0, true, "focused", false, "none")
+    @params(true, false, 0, false, "footprint", false, "none")
+    @params(false, true, 1, false, "none", true, "focused")
+    @params(false, false, 1, false, "none", false, "none")
+    @params(true, true, 1, false, "none", true, "focused")
+    @params(true, false, 1, false, "none", false, "footprint")
+    function _(useFootprint, isFocused, focusIndex, f1, fs1, f2, fs2)
+      c1 = { "id": "c1" }
+      c2 = { "id": "c2" }
+      m.control.visibleChildren = [c1, c2]
+
+      m.control.useFootprint = useFootprint
+      m.control.isFocused = isFocused
+      m.control.focusedIndex = focusIndex
+      m.control.selectedIndex = focusIndex
+      m.control.redraw()
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    @describe("onKeyPressOk")
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    @it("selects, if the control is not disabled")
+    @params(0, false, false, 0)
+    @params(1, false, false, 1)
+    @params(0, false, true, 0)
+    @params(1, true, false, 1)
+    @params(0, true, false, -1)
+    @params(1, false, true, -1)
+    function _(focusedIndex, c1Disabled, c2Disabled, expectedIndex)
+      c1 = {
+        "id": "c1"
+        isDisabled: c1Disabled
+      }
+      c2 = {
+        "id": "c2"
+        isDisabled: c2Disabled
+      }
+      m.control.selectedIndex = -1
+      m.control.focusedIndex = focusedIndex
+      m.control.visibleChildren = [c1, c2]
+
+      m.assertTrue(m.control.onKeyPressOK())
+      m.assertEqual(m.control.selectedIndex, expectedIndex)
+
+    end function
+
+    @it("sets controls isSelected to true, if the control is not disabled and setIsSelectedOnChildren is true")
+    @params(false, true)
+    @params(true, invalid)
+    @params(invalid, true)
+    function _(disabled, expectedIsSelected)
+      c1 = {
+        "id": "c1"
+        isDisabled: disabled
+      }
+      m.control.setIsSelectedOnChildren = true
+
+      m.control.selectedIndex = -1
+      m.control.focusedIndex = 0
+      m.control.visibleChildren = [c1]
+
+      m.assertTrue(m.control.onKeyPressOK())
+      selectedControl = m.control.visibleChildren[0]
+
+      m.assertEqual(c1.selected, expectedIsSelected)
+      m.assertEqual(selectedControl.isSelected, expectedIsSelected)
+    end function
+
+    @it("doesn't set controls isSelected to true, if setIsSelectedOnChildren is false")
+    @params(false)
+    @params(true)
+    @params(invalid)
+    function _(disabled)
+      c1 = {
+        "id": "c1"
+        isDisabled: disabled
+        selected: false
+        isSelected: false
+      }
+      m.control.setIsSelectedOnChildren = false
+
+      m.control.selectedIndex = -1
+      m.control.focusedIndex = 0
+      m.control.visibleChildren = [c1]
+
+      m.assertTrue(m.control.onKeyPressOK())
+      selectedControl = m.control.visibleChildren[0]
+
+      m.assertFalse(c1.selected)
+      m.assertFalse(selectedControl.isSelected)
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    @describe("setFocusedControl")
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    @it("doesn't crash if control is not a roSGNode")
+    @params([])
+    @params({})
+    @params(invalid)
+    function _(control)
+      m.control.setFocusedControl(control)
+
+      m.assertEqual(m.control.focusedIndex, -1)
+      m.assertInvalid(m.control.focusedControl)
+    end function
+
+    @it("doesn't set focused control if control is not found in original children")
+    function _()
+      control = mc.createSGNode("Node", invalid, "node")
+
+      visibleChildren = [{ "id": "visibleChildren" }]
+      m.control.visibleChildren = visibleChildren
+
+      m.control.setFocusedControl(control)
+
+      m.assertEqual(m.control.focusedIndex, -1)
+      m.assertInvalid(m.control._focusedControl)
+    end function
+
+    @it("sets focused control if control is found in original children")
+
+    function _()
+      control = mc.createSGNode("Node", invalid, "node")
+
+      visibleChildren = [{ "id": "node" }]
+      m.control.visibleChildren = visibleChildren
+
+
+      m.control.setFocusedControl(control)
+
+      m.assertEqual(m.control.focusedIndex, 0)
+      m.assertEqual(m.control._focusedControl, control)
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    @describe("getIsFocusedControl")
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    @it("returns true if control is focused or not")
+    @params(true)
+    @params(false)
+    function _(isSameNode)
+      control = { "id": "control" }
+      m.control._focusedControl = control
+
+      m.expectCalled(m.control._focusedControl.isSameNode(control), isSameNode)
+      m.assertEqual(m.control.getIsFocusedControl(control), isSameNode)
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    @describe("setSelectedIndex")
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    @it("doesn't do anything if index is out of bounds")
+    @params(-1)
+    @params(1)
+    @params(2)
+    function _(index)
+      control = { "id": "c1" }
+      m.control.visibleChildren = [control]
+      m.control.setSelectedIndex(index)
+    end function
+
+    @it("sets isSelected to true on the selected control if control is found in original children and not disabled")
+    @params(false, true)
+    @params(true, false)
+    function _(disabled, expected)
+      control = { "id": "c1", isSelected: false, isDisabled: disabled }
+      m.control.visibleChildren = [control]
+      m.control.setSelectedIndex(0)
+      m.assertEqual(control.isSelected, expected)
+    end function
+
+  end class
+end namespace

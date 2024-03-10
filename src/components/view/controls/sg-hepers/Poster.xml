@@ -1,0 +1,24 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<component
+    name='mv_Poster'
+    extends='Poster'>
+  <interface>
+    <field
+        id='style'
+        type='assocarray' />
+    <field
+        id='focusedUri'
+        type='string' />
+    <field
+        id='normalUri'
+        type='string' />
+    <field
+        id='isFocused'
+        type='boolean' />
+    <field
+        id='size'
+        type='array' />
+
+  </interface>
+</component>

@@ -1,0 +1,637 @@
+import "pkg:/source/roku_modules/log/LogMixin.brs"
+import "pkg:/source/core/Collections.bs"
+import "pkg:/source/core/Utils.bs"
+import "pkg:/source/core/BaseClass.bs"
+
+namespace mc.tasks
+
+  function setTimeout(callback as function, duration = 0.01 as float, sendMode = "none" as string, scope = invalid as object, parent = invalid as mc.types.node) as mc.types.node
+    return mc.tasks.waitAFrame(callback, duration, sendMode, scope, parent)
+  end function
+
+  function setInterval(callback as function, duration = 0.01 as float, sendMode = "none" as string, scope = invalid as object, parent = invalid as mc.types.node) as mc.types.node
+    return mc.tasks.waitAFrame(callback, duration, sendMode, scope, parent, true)
+  end function
+
+  function cancelTimeout(timer as mc.types.node)
+    mc.tasks.cancelWaitTimer(timer)
+  end function
+
+  function cancelInterval(timer as mc.types.node)
+    mc.tasks.cancelWaitTimer(timer)
+  end function
+
+  function waitAFrame(callback as function, duration = 0.01 as float, sendMode = "none" as string, scope = invalid as object, parent = invalid as mc.types.node, repeat = false as boolean) as mc.types.node
+    callbackName = mc.getFunctionName(callback)
+    if callbackName = invalid
+      m.log.error("function ", callback, "does not exist, or is not in scope")
+      return invalid
+    end if
+
+    if m.log <> invalid
+      if scope <> invalid
+        scopeName = scope.__classname
+      else
+        scopeName = "unknown"
+      end if
+      m.log.info("waiting", duration, "before invoking", callbackName, "on", scopeName)
+    end if
+
+    if parent = invalid
+      parent = m.top.getScene()
+    end if
+
+    frameTimer = mc.private.getMaestroPooledComponent("Timer")
+    frameTimer.duration = duration
+    frameTimer.repeat = repeat
+    mc.tasks.observeNodeField(frameTimer, "fire", callback, sendMode, not repeat, scope)
+    mc.setOrAddNodeField(frameTimer, "isFrameTimer", true)
+    mc.setOrAddNodeField(frameTimer, "isReleased", false)
+    frameTimer.control = "start"
+    return frameTimer
+  end function
+
+  function cancelWaitTimer(timer as mc.types.node)
+    if timer <> invalid
+      if timer.isReleased <> true
+        mc.tasks.cleanNodeObserver(timer, "fire")
+        timer.isFrameTimer = false
+        timer.control = "stop"
+        mc.setOrAddNodeField(timer, "isReleased", true)
+        mc.private.releaseMaestroPooledComponent(timer)
+        if timer.getParent() <> invalid
+          timer.getParent().removeChild(timer)
+        end if
+      else
+        mc.private.logError("attempted to cancel previously cancelled timeout", mc.dv(timer))
+      end if
+    end if
+  end function
+
+  '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  '++ task support
+  '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+  ' /**
+  '  * @member createTask
+  '  * @memberof module:Tasks
+  '  * @instance
+  '  * @description description
+  '  * @param {string} taskType
+  '  * @param {assocarray} fields - fields to apply to task
+  '  * @param {function} callback function to call when task has completed
+  '  * @param {boolean} isRunning indicates if task should be started
+  '  * @param {string} fieldName name of the field ot listen for on the task node
+  '  * @param {string} sendMode ("value"|"node"|"both"|"none") - if both, then your function must have 2 params (result, node)
+  '  * @param {object|invalid} scope - scope on which to execute the callback (default to node's m)
+  '  * @returns {node|invalid} task, or invalid it could not be created
+  '  */
+  function createTask(taskType as string, fields as mc.types.assocarray, callback = invalid as function, isRunning = true as boolean, sendMode = "value" as string, scope = invalid as object, fieldName = "output" as string)
+    globalObj = mc.getGlobal()
+    task = mc.createSGNode(taskType)
+
+    if task = invalid
+      m.log.error("could not create task of type", taskType)
+      return invalid
+    end if
+
+    if not mc.isAACompatible(fields)
+      fields = {}
+    end if
+
+    if fields.args = invalid and task.doesExist("args")
+      fields = {
+        args: fields
+      }
+    end if
+
+    fields._observedField = fieldName
+
+    mc.setOrAddNodeFields(task, fields)
+    if callback <> invalid
+      mc.tasks.observeNodeField(task, fieldName, callback, sendMode, true, scope)
+    end if
+
+    if asBoolean(globalObj.maestroConfig.isTrackingTaskUsage)
+      mc.tasks.observeNodeField(task, "state", mc.tasks.onTaskStateChange, "both")
+    end if
+
+    if isRunning
+      task.control = "RUN"
+    end if
+
+    return task
+  end function
+
+  ' /**
+  '  * @member observeNodeField
+  '  * @memberof module:Tasks
+  '  * @instance
+  '  * @function
+  '  * @description observes a node in a way that makes it clean and easy to get value back out
+  '  * @param {node} node with field to observe
+  '  * @param {string} fieldName field to observe
+  '  * @param {function|string} callback pointer to function to call, or string of field to set, if sendmode is "field"
+  '  * @param {string} sendMode ("value"|"node"|"both"|"field"|"none"|internal use only: "fieldAndValue") - if both, then your function must have 2 params (result, node), if "field, then it will set the field named callback on instance"
+  '  * @param {boolean} once if true observer is removed when first fired
+  '  * @param {object|invalid} scope - scope on which to execute the callback (default to node's m)
+  '  * @returns {boolean} true if set, false otherwise
+  '  */
+  function observeNodeField(node as mc.types.node, fieldName as string, callback as function, sendMode = "value" as string, once = false as boolean, scope = invalid as object, fieldAndValueTargetField = invalid as string) as boolean
+    targetField = invalid
+    context = {}
+    if mc.isInvalid(callback)
+      if mc.isUndefined(callback)
+        m.log.error("callback is not in scope for field", fieldName)
+      else
+        m.log.error("callback is not provided for field", fieldName)
+      end if
+    else if mc.isString(callback)
+      context.dottedSet = callback.instr(".") <> -1
+      if scope = invalid
+        m.log.error("can't use callback for member", callback, "as member, when no scope is provided for field", fieldName)
+        return false
+      else if not context.dottedSet and not scope.doesExist(callback)
+        m.log.error("callback member", callback, "does not exist on target scope for field", fieldName)
+        return false
+      end if
+      targetField = callback
+      sendMode = "field"
+      callback = invalid
+    else if sendMode = "fieldAndValue"
+      targetField = fieldAndValueTargetField
+      context.dottedSet = false
+    end if
+
+    if mc.isInvalid(node)
+      m.log.error("no node provided to observe for field", fieldName)
+      return false
+    end if
+
+    if scope <> invalid
+      context.instance = scope
+    else
+      scope = m
+    end if
+
+    context.targetField = targetField
+    context.callback = callback
+    context.scope = scope
+    context.field = fieldName
+    context.sendMode = sendMode
+    context.once = once = true
+    context.node = node
+
+    if node._oid = invalid
+      node.addFields({ "_oid": rnd(2147483647).toStr() })
+    end if
+    if scope._oid = invalid
+      mc.setOrAddNodeField(scope, "_oid", rnd(2147483647).toStr())
+    end if
+
+    context.key = mc.tasks._getContextKey(node, fieldName, callback, targetField, context.instance)
+
+    contexts = mc.tasks._getScopeContexts()[node._oid + "_" + fieldName]
+    if contexts = invalid
+      contexts = {}
+      mc.tasks._getScopeContexts()[node._oid + "_" + fieldName] = contexts
+      'bs:disable-next-line
+      node.observeFieldScoped(fieldName, mc.getFunctionName(_nodeCallbackBridge))
+    end if
+    contexts[context.key] = context
+
+    return true
+  end function
+
+  function _getContextKey(node as mc.types.node, fieldName as string, callback as function, targetField as string, instance = invalid as object) as string
+    if callback <> invalid
+      cb = mc.getFunctionName(callback)
+    else
+      cb = targetField
+    end if
+
+    if instance <> invalid
+      return `${node.id}.${fieldName}->${instance._oid}.${cb}`
+    else
+      return `${node.id}.${fieldName}->m.${cb}`
+    end if
+  end function
+
+  function _getScopeContexts()
+    if m._nodeContexts = invalid
+      m._nodeContexts = {}
+    end if
+    return m._nodeContexts
+  end function
+
+  function _nodeCallbackBridge(evt as object)
+    node = evt.getRoSGNode()
+    fieldName = evt.getField()
+    contexts = mc.getPath(m, "_nodeContexts." + node._oid + "_" + fieldName)
+
+    if contexts = invalid
+      m.log.error("contexts not found for node", node._oid)
+      contexts = {}
+    end if
+
+
+    for each key in contexts
+      context = contexts[key]
+
+      if context.once
+        ' ? "++ +removing CONTEXT "; key
+        mc.tasks.unobserveNodeField(node, fieldName, context.callback, context.instance)
+        if node.isFrameTimer = true
+          if node.getParent() <> invalid
+            node.getParent().removeChild(node)
+          end if
+          mc.private.releaseMaestroPooledComponent(node)
+        else if node.removeOnObserve = true and node.getParent() <> invalid
+          node.getParent().removeChild(node)
+        end if
+      end if
+
+      if context.sendMode = "field" and context.targetField <> invalid
+        if context.dottedSet
+          mc.setPath(context.instance, context.targetField, node[fieldName])
+        else
+          context.instance[context.targetField] = node[fieldName]
+        end if
+      else if context.callback <> invalid
+        if context.instance <> invalid
+          context.instance.__cb = context.callback
+          if context.sendMode = "none"
+            'bs:disable-next-line
+            context.instance.__cb()
+          else if context.sendMode = "value"
+            'bs:disable-next-line
+            context.instance.__cb(node[fieldName])
+          else if context.sendMode = "both"
+            'bs:disable-next-line
+            context.instance.__cb(node[fieldName], context.node)
+          else if context.sendMode = "node"
+            'bs:disable-next-line
+            context.instance.__cb(context.node)
+          else if context.sendMode = "fieldAndValue"
+            if context.dottedSet
+              mc.setPath(context.instance, context.targetField, node[fieldName])
+            else
+              context.instance[context.targetField] = node[fieldName]
+            end if
+            'bs:disable-next-line
+            context.instance.__cb(node[fieldName])
+          end if
+          context.instance.delete("__cb")
+        else
+          executeInScope = function(this as object, callback as function, value as dynamic, sendMode as string, node = invalid as mc.types.node)
+            m = this
+            if sendMode = "both"
+              callback(value, node)
+            else if sendMode = "node"
+              callback(node)
+            else if sendMode = "none"
+              callback()
+            else
+              callback(value)
+            end if
+          end function
+
+          executeInScope(context.scope, context.callback, node[fieldName], context.sendMode, node)
+        end if
+      else
+        m.log.error("could not identify callback for context: ", context)
+      end if
+    end for
+  end function
+
+  function unobserveNodeField(node as mc.types.node, fieldName as string, callback as float, scope = invalid as object)
+    targetField = invalid
+    if mc.isInvalid(callback)
+      if mc.isUndefined(callback)
+        m.log.error("callback is not in scope for field", fieldName)
+      else
+        m.log.error("callback is not provided for field", fieldName)
+      end if
+      return false
+    else if mc.isString(callback)
+      targetField = callback
+      callback = invalid
+    end if
+
+    if mc.isInvalid(node)
+      m.log.error("no node provided to unobserve for field", fieldName)
+      return false
+    end if
+
+    if node._oid = invalid
+      'node was never observed
+      return false
+    end if
+
+    cKey = node._oid + "_" + fieldName
+    contexts = mc.tasks._getScopeContexts()[cKey]
+    if contexts <> invalid
+      key = mc.tasks._getContextKey(node, fieldName, callback, targetField, scope)
+      contexts.delete(key)
+      if contexts.count() = 0
+        mc.tasks.cleanNodeObserver(node, fieldName)
+      else
+      end if
+    end if
+
+    return true
+  end function
+
+  function cleanNodeObserver(node as mc.types.node, fieldName as string)
+    if node <> invalid and fieldName <> invalid and m._nodeContexts <> invalid
+      m._nodeContexts.delete(`${node._oid}_${fieldName}`)
+      node.unobserveFieldScoped(fieldName)
+    end if
+  end function
+
+  function cleanScope()
+    contexts = mc.tasks._getScopeContexts()
+    for each contextKey in contexts
+      context = contexts[contextKey]
+      for each key in context
+        c = context[key]
+        mc.tasks.cleanNodeObserver(c.node, c.fieldName)
+      end for
+    end for
+    m._nodeContexts = {}
+  end function
+
+  function cancelTask(task as mc.types.node)
+    if task <> invalid
+      mc.tasks.cleanNodeObserver(task, task._observedField)
+      task.control = "stop"
+    end if
+  end function
+
+  function onTaskStateChange(state as string, task as mc.types.node)
+    isRunning = state = "run"
+    wasRunning = asBoolean(task._mIsRunning) = true
+    if not wasRunning and state = "run"
+      mc.setOrAddNodeField(task, "_mIsRunning", true)
+    else if wasRunning and state = "stop" or state = "done"
+      mc.setOrAddNodeField(task, "_mIsRunning", false)
+    end if
+
+    if isRunning = wasRunning
+      return invalid
+    end if
+
+    globalObj = mc.getGlobal()
+    taskType = task.subType()
+    isLoggingTasks = asBoolean(globalObj.maestroConfig.isLoggingTaskTracking)
+
+    maestroTasks = globalObj._maestroTasks
+    if maestroTasks = invalid
+      maestroTasks = mc.createSGNode("Node")
+      mc.setOrAddNodeField(globalObj, "_maestroTasks", maestroTasks)
+    end if
+    isRunning = isRunning = true ? 1 : 0
+    numberRunning = asInteger(maestroTasks[taskType]) + isRunning ? 1 : 0
+
+    if numberRunning > 0
+      mc.setOrAddNodeField(maestroTasks, taskType, numberRunning)
+    else
+      maestroTasks.removeField(taskType)
+    end if
+
+    if isLoggingTasks
+      fields = maestroTasks.getFields()
+      for each field in fields.items()
+        if not mc.isInteger(field.value)
+          fields.delete(field.key)
+        end if
+      end for
+    end if
+    return invalid
+  end function
+
+  '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  '++ ValueObserver class
+  '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+  class ValueObserver
+    private node
+    private field
+    private target
+    private pendingComparators = {}
+    private comparators = {}
+
+    function new(node as mc.types.node, field as string, target as object)
+      m.target = target
+      m.node = node
+      m.field = field
+      mc.tasks.observeNodeField(node, field, m.valueCallback, "both", false, m)
+    end function
+
+    function reset(hardReset = false as boolean)
+      m.pendingComparators = {}
+      if hardReset
+        m.comparators = {}
+      else
+        m.pendingComparators.append(m.comparators)
+      end if
+    end function
+
+    function destroy()
+      m.reset(true)
+      for each key in m.comparators
+        comparator = m.comparators[key]
+        mc.tasks.unobserveNodeField(m.node, m.field, comparator.cb, m.target)
+      end for
+    end function
+
+    function onValue(value as dynamic, func as function, comparator = "=" as string, mode = "value" as string)
+      c = { v: value, cb: func, c: comparator, mode: mode }
+      key = `${value}_${comparator}`
+      m.comparators[key] = c
+      m.pendingComparators[key] = c
+    end function
+
+    function valueCallback(value as dynamic, node as mc.types.node)
+      if m.pendingComparators.count() > 0
+        for each id in m.pendingComparators
+          o = m.pendingComparators[id]
+          if (o.c = "=" and value = o.v) or (o.c = ">" and value > o.v) or (o.c = ">=" and value >= o.v) or (o.c = "<" and value < o.v) or (o.c = "<=" and value <= o.v) or (o.c = "<>" and value <> o.v)
+            m.pendingComparators.delete(id)
+            if mc.isAACompatible(m.target)
+              m.target.__cb = o.cb
+              if o.mode = "both"
+                'bs:disable-next-line
+                m.target.__cb(value, node)
+              else if o.mode = "value"
+                'bs:disable-next-line
+                m.target.__cb(value)
+              else
+                'bs:disable-next-line
+                m.target.__cb()
+              end if
+              m.target.delete("__cb")
+            else
+              executeInScope = function(this as object, callback as function, mode as string)
+                m = this
+                if mode = "both"
+                  'bs:disable-next-line
+                  callback(value, node)
+                else if mode = "value"
+                  'bs:disable-next-line
+                  callback(value)
+                else
+                  'bs:disable-next-line
+                  callback()
+                end if
+              end function
+              'FIXME - not sure if this will work - it might be that m is aa compatible so this if will never fire. moot point for maestro in general; but might raise a problem from regular non-nodeClass/non-task non-vm usage (which I never do; but someone might)
+              executeInScope(m.target, o.cb, o.mode)
+            end if
+          end if
+        end for
+      end if
+    end function
+  end class
+
+  class TaskRunner extends mc.BaseClass
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++  Public Fields
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    public state = "pending"
+    public isOk = false
+    public failOnAny = true
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Private Fields
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    private delegate as dynamic
+    private runMode = "sequential" 'parallel|sequential
+    private tasks = []
+    private taskIndex = -1
+    private fieldName = "output"
+    private failCount = 0
+    private callback = 0
+    private isDelegateCalled = false
+
+    private taskResults = {}
+
+    function new(delegate as dynamic, fieldName = "output" as string)
+      super("TaskRunner")
+      m.fieldName = fieldName
+      m.delegate = delegate
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Public Methods
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    public function run(callback as function, runMode = "sequential" as string, tasks = invalid as mc.types.array) as void
+      if tasks <> invalid
+        m.tasks = tasks
+      end if
+      if m.state <> "pending"
+        m.log.error("cannot start tasks when already running/complete")
+        return
+      end if
+
+      m.runMode = mc.collections.find(["sequential", "parallel"], runMode, "sequential")
+      m.callback = callback
+      m.state = "running"
+      m.runNext()
+    end function
+
+    ' adds task to group of tasks
+    protected override function createTask(taskType as string, fields as mc.types.assocarray, callback = invalid as function, sendMode = "value" as string, fieldName = "output" as string)
+      if m.state <> "pending"
+        m.log.error("cannot create tasks when already running/complete")
+        return invalid
+      end if
+      task = mc.tasks.createTask(taskType, fields, callback, false, sendMode, m.delegate, fieldName)
+      m.tasks.push(task)
+      return task
+    end function
+
+    public function cancel()
+      m.reset()
+      m.state = "cancelled"
+    end function
+
+    public function reset()
+      for each task in m.tasks
+        mc.tasks.cancelTask(task)
+      end for
+      m.tasks = []
+      m.isOk = false
+      m.state = "pending"
+      m.isDelegateCalled = false
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Private Methods
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+    private function runNext() as void
+      if m.runMode = "sequential"
+        m.taskIndex++
+        if m.taskIndex <= m.tasks.count() - 1
+          task = m.tasks[m.taskIndex]
+          m.log.info("starting next sequential task", mc.dv(task))
+          m.observeNodeField(task, m.fieldName, m.onTaskComplete, "both")
+          task.control = "RUN"
+        else
+          m.log.info("finished running all tasks")
+        end if
+      else
+        if m.tasks.count() > 10
+          m.log.warn("trying to run", m.tasks.count(), "tasks. Running more than 10 is discouraged")
+        end if
+        for each task in m.tasks
+          m.observeNodeField(task, m.fieldName, m.onTaskComplete, "both")
+          task.control = "RUN"
+        end for
+      end if
+    end function
+
+    private function onTaskComplete(value as dynamic, task as mc.types.node) as void
+      m.taskResults[task._oid] = value
+      if not mc.getBoolean(value, "isOK")
+        m.failCount++
+        if m.failOnAny and m.state = "running"
+          m.reset()
+          m.state = "error"
+          m.callDelegate()
+          return
+        end if
+      end if
+
+      if m.taskResults.count() = m.tasks.count()
+        m.log.info("all tasks are complete")
+        m.reset()
+        m.state = m.failCount = 0 ? "success" : "error"
+        m.isOk = m.state = "success"
+        m.callDelegate()
+      else if m.runMode = "sequential" and m.failCount = 0 or not m.failOnAny
+        m.runNext()
+      end if
+    end function
+
+    private function callDelegate() as void
+      if m.isDelegateCalled
+        return
+      end if
+      m.isDelegateCalled = true
+      m.delegate.__cb = m.callback
+      try
+        'bs:disable-next-line
+        m.delegate.__cb(m.isOk, m)
+      catch error
+        'bs:disable-next-line
+        mc.private.logError("Error executing delegate callback", error)
+      end try
+    end function
+  end class
+end namespace

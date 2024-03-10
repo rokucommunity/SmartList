@@ -1,0 +1,64 @@
+import "pkg:/source/sl/collectionView/BaseCollectionViewLayout.bs"
+import "pkg:/source/sl/collectionView/CollectionView.bs"
+
+namespace sl.collectionView
+  class HorizontalRowLayout extends sl.collectionView.BaseCollectionViewLayout
+    enabled = true
+    private titleLabel as mc.types.node
+
+    function new(view as sl.collectionView.CollectionView)
+      super(view, "HorizontalRowLayout")
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Overridden Methods
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    override function render(event as sl.collectionView.RenderEvent) as void
+      if m.titleLabel <> invalid
+        m.titleLabel.translation = [0, event.position]
+        event.position += 50
+      end if
+      super.render(event)
+    end function
+
+
+    override function onEnterScreen()
+      super.onEnterScreen()
+      m.configureTitleLabel()
+    end function
+
+    override function onExitScreen()
+      super.onExitScreen()
+      if m.titleLabel <> invalid
+        m.componentPool@.releaseComponent(m.titleLabel)
+        m.titleLabel.visible = false
+        m.titleLabel = invalid
+      end if
+    end function
+
+    private function configureTitleLabel() as void
+      if m.row.content = invalid
+        return
+      end if
+
+      title = m.row.content.title
+      if title <> invalid and title <> ""
+        m.titleLabel = m.componentPool@.getComponent("mv_Label.horizontalRowTitle", 3, {
+          "color": "#ffffff"
+          "fontKey": "medium,30"
+          "size": [400, 40]
+          "translation": [10, 10]
+        })
+
+        if not m.row.container.isSameNode(m.titleLabel.getParent())
+          m.row.container.appendChild(m.titleLabel)
+        end if
+        m.titleLabel.visible = true
+        m.titleLabel.text = title + " " + m.row.index.toStr()
+      end if
+    end function
+
+  end class
+
+end namespace

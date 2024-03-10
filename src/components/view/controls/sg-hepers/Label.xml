@@ -1,0 +1,39 @@
+<?xml version='1.0' encoding='utf-8'?>
+<component
+    name='mv_Label'
+    extends='Label'>
+  <interface>
+    <field
+        id='style'
+        type='assocarray' />
+
+    <field
+        id='fontKey'
+        type='string'
+        value='' />
+    <field
+        id='fontStyleKey'
+        type='string'
+        value='' />
+
+    <field
+        id='highlightedColor'
+        type='string'
+        value='' />
+
+        <field
+        id='normalColor'
+        type='string'
+        value='' />
+
+    <field
+        id='isHighlighted'
+        type='boolean'
+        value='false' />
+
+    <field
+        id='size'
+        type='array' />
+
+  </interface>
+</component>

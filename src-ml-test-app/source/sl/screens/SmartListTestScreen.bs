@@ -1,0 +1,265 @@
+import "pkg:/source/view/BaseScreen.bs"
+import "pkg:/source/view/Animation.bs"
+import "pkg:/source/view/Animation.bs"
+import "pkg:/source/sl/common/SLFactory.bs"
+import "pkg:/source/sl/common/SLApi.bs"
+
+namespace sl.screens
+
+  @observersWaitInitialize
+  @node("SmartListTestScreen", "mv_BaseScreen")
+  class SmartListTestScreen extends mv.BaseScreen
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Public Fields
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Views
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    private container as mc.types.node
+    private panelController as mc.types.node
+    private breadCrumbView as mc.types.node
+    private background as mc.types.node
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Private Fields
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    private selectedMenuItem as mc.types.node
+    private focusedMenuItem as mc.types.node
+    private isContentFocused = false
+    private isMenuReady = false
+    private activeMenuScreen as mc.types.node
+    private currentView as mc.types.node
+    private factory = new sl.common.SLFactory()
+    private screenCache = {}
+    private panelTransition as mc.types.node
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Initialization
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    function new()
+      super("SmartListTestScreen")
+    end function
+
+    protected override function initialize()
+      super.initialize()
+      m.log.info("Intiializing SmartList (maestro SDK)")
+      m.createViews()
+
+      'give everything a chance to settle before triggering selections for focus
+      m.setTimeout(m.configureMenu)
+    end function
+
+    private function configureMenu()
+      m.log.info("Loading menu items")
+      menuItems = m.factory.createMenuItems()
+      m.pushMenu(menuItems)
+      m.isMenuReady = true
+      m.onMenuItemFocused(m.createSelection(menuItems.getChild(0), sl.common.SelectionAction.focus))
+    end function
+
+
+    private function onMenu(isSelected as boolean)
+    end function
+
+    private function createViews()
+      m.observe(m.panelController.isSelcted, m.onMenu)
+
+      m.createUI([
+        Group({
+          id: "container"
+        }, [
+          SL_BackgroundView({
+            id: "background"
+          })
+          mv_PanelController({
+            id: "panelController"
+          })
+          SL_BreadCrumbView({
+            id: "breadCrumbView"
+            text: "{{data.title}}"
+          })
+        ])
+      ])
+      'FIXME - the transition for panels needs some love..
+      ' m.panelController.transition = m.createSGNode("sl_CrossFadeTransition")
+      m.focusedControl = m.panelController
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Callbacks
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    private function onMenuItemSelected(selection as mc.types.node)
+      m.log.info("Selected menu item", selection.initialItem)
+      m.selectFocusedItem()
+    end function
+
+    private function onMenuItemFocused(selection as mc.types.node)
+      m.log.info("focused on  menu item item", selection.initialItem)
+      m.focusedMenuItem = selection.initialItem
+
+      if asString(m.focusedMenuItem.focusAction) = sl.common.FocusAction.display
+        screen = m.getScreen(selection)
+        viewMode = asString(m.focusedMenuItem.viewMode)
+        if viewMode = sl.common.ViewMode.root
+          m.showScreenAsRoot(screen)
+        else if viewMode = sl.common.ViewMode.subPanel
+          depth = asInteger(selection.originScreen.depth)
+          m.showScreenAtDepth(screen, depth + 1)
+        else
+          m.log.warn("Unknown ViewMode when focusing on item:", viewMode)
+        end if
+      else
+        m.log.info("ignoring menu item focus action", asString(m.focusedMenuItem.focusAction))
+        m.clearContent()
+      end if
+      m.background@.setContent(m.focusedMenuItem)
+    end function
+
+    private function showScreenAsRoot(screen as mc.types.node)
+      m.log.info("Showing root screen for item id", m.focusedMenuItem.id)
+      if m.panelController.numberOfViews = 1
+        m.panelController@.push(screen)
+      else if m.panelController.numberOfViews = 2
+        m.log.info("Replacing current panel")
+        m.panelController@.replace(screen)
+      end if
+    end function
+
+    private function showScreenAtDepth(screen as mc.types.node, depth as integer)
+      m.log.info("Showing screen", screen.id, "at depth", depth)
+      'if we are already this deep, we replace
+      if m.panelController.numberOfViews = depth
+        m.panelController@.push(screen)
+      else
+        m.panelController@.replace(screen)
+      end if
+    end function
+
+    private function clearContent()
+      m.log.warn("Clearing content back to main menu")
+
+      if m.panelController.numberOfViews > 1
+        m.log.info("clearing content")
+
+        m.panelController@.pop()
+      end if
+    end function
+
+    private function getScreen(selection as mc.types.node)
+      'lightweight cache
+      item = selection.initialItem
+      screen = m.screenCache[item.id]
+      if screen = invalid
+        screen = m.createSGNode({
+          id: item.id
+          _type: item.screenType
+        })
+        screen@.setContent(item)
+        m.screenCache[item.id] = screen
+      end if
+      return screen
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Menu Methods (TODO - move to manager)
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    private function pushMenu(menuItems as mc.types.node)
+      m.activeMenuScreen = m.createSGNode({
+        _type: "sl_MenuScreen"
+        id: menuItems.id
+      })
+      m.activeMenuScreen@.setContent(menuItems)
+      m.panelController@.push(m.activeMenuScreen)
+    end function
+
+    private function pushScreen(selection as mc.types.node)
+
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Selection management
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    override function onExecuteSelection(selection as mc.types.node) as boolean
+      m.log.info("A selection has been made with action", selection.action)
+      if not m.isMenuReady
+        m.log.warn("Recevied a selection while app is initializing. Ignoring")
+        return false
+      end if
+
+      if selection.action = sl.common.SelectionAction.focus
+        m.onMenuItemFocused(selection)
+      else if selection.action = sl.common.SelectionAction.select
+        m.onMenuItemSelected(selection)
+      end if
+      return true
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Private Methods
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    private function moveBack()
+      'TODO - logic to know if we should pop a panel or not here!
+      if m.panelController.numberOfViews > 1
+        m.log.info("Moving panel set back")
+
+        m.panelController.activeIndex--
+      else
+        m.log.info("Already on first index of panel set")
+      end if
+    end function
+
+    private function selectFocusedItem()
+      m.panelController.activeIndex++
+      m.breadCrumbView@.setContent(m.focusedMenuItem)
+    end function
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Key Presses
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    private function isCapturingAnyKeyPress(key as string, press as boolean) as boolean
+      return true
+    end function
+
+    protected override function onKeyPressBack() as boolean
+      m.moveBack()
+      return true
+    end function
+
+    protected override function onKeyPressLeft() as boolean
+      m.moveBack()
+      return true
+    end function
+
+    protected override function onKeyPressRight() as boolean
+      m.log.info("pressed right")
+
+      if m.panelController.activeIndex = 0
+        m.selectFocusedItem()
+      end if
+      return true
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Lifecycle Methods
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    protected override function onFirstShow()
+      super.onFirstShow()
+    end function
+
+    protected override function onShow()
+      m.log.info("onShow")
+      super.onShow()
+    end function
+
+  end class
+end namespace

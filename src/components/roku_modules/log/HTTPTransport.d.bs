@@ -1,0 +1,10 @@
+' /**
+'  * @module LogScreenTransport
+'  * @description implementation of mLog screen transport
+'  */
+function init()
+end function
+function logItem(name, levelNum, text)
+end function
+function sendLogsNow(args = invalid)
+end function

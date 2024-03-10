@@ -1,0 +1,138 @@
+import "pkg:/source/sl/screens/BaseScreen.bs"
+import "pkg:/source/sl/common/SLApi.bs"
+
+namespace sl.screens
+
+  @observersWaitInitialize
+  @node("sl_CollectionViewScreen", "mv_BaseScreen")
+  class CollectionViewScreen extends sl.screens.BaseScreen
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Events
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Public Fields
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Views
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    private titleLabel as mc.types.node
+    private collectionView as mc.types.node
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Private Fields
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    private content as mc.types.node
+    private collectionViewContent as mc.types.node
+    private task as mc.types.node
+    private isLoaded = false
+    private loadingIndicator as mc.types.node
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Initialization
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    function new()
+      super("CollectionViewScreen")
+    end function
+
+    protected override function initialize()
+      super.initialize()
+      m.createViews()
+      m.top.clippingRect = {
+        width: 1920
+        height: 980
+        x: 0
+        y: 170
+      }
+    end function
+
+    private function createViews()
+      m.createUI([
+        SL_CollectionView({
+          id: "collectionView"
+          translation: [0, 170]
+        })
+      ])
+      m.loadingIndicator = m.createSGNode("LoadingIndicator", m.top, "loadingIndicator", {
+        "width": 1920
+        "height": 1080
+        translation: [-640, 0]
+        "backgroundVisible": false
+        "text": ""
+      })
+      m.focusedControl = m.collectionView
+      m.loadingIndicator.isActive = true
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Private Methods
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    private function setIsLoaded(loaded as boolean)
+      m.log.info("setting screen as loaded:", loaded)
+      m.isLoaded = true
+      'handle loading spinner in here
+      m.collectionView.visible = loaded
+      m.loadingIndicator.isActive = not loaded
+    end function
+
+    function setContent(content as mc.types.node)
+      m.content = content
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Callbacks
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    private function onScreenContentLoadedTask(result as mc.Result)
+      if result.isOk
+        m.log.info("Content loaded succesfully")
+
+        m.collectionViewContent = result.data
+        m.collectionView.translation = asPoint(m.collectionViewContent.gridOffset, [0, 170])
+        m.collectionView@.setContent(m.collectionViewContent)
+        m.itemCache@.set(result.data.id, result.data)
+        m.setIsLoaded(true)
+      else
+        m.log.error("Could not load content")
+        m.setIsLoaded(false)
+      end if
+    end function
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Key Presses
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    protected override function onKeyPressBack() as boolean
+      return false
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Lifecycle Methods
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    protected override function onShow()
+      super.onShow()
+      if not m.isLoaded
+        m.log.info("content not loaded yet, call loadContent")
+        m.loadContent(m.content, "LoadScreenContentTask", m.onScreenContentLoadedTask)
+      else
+        m.log.info("content already loaded, no need to do anything")
+      end if
+    end function
+
+    protected override function onHide()
+      super.onHide()
+      m.log.info("Hiding Screen, unload content")
+      m.collectionView.visible = false
+      m.cancelTask(m.task)
+      m.task = invalid
+      m.isLoaded = false
+      'cancel loading
+    end function
+  end class
+end namespace

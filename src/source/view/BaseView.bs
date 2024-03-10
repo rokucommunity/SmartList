@@ -1,0 +1,324 @@
+import "pkg:/source/roku_modules/log/LogMixin.brs"
+import "pkg:/source/core/Utils.bs"
+import "pkg:/source/core/MIOC.bs"
+import "pkg:/source/view/NodeClass.bs"
+import "pkg:/components/view/mixin/FocusMixin.bs"
+
+namespace mv
+  ' /**
+  '  * @module BaseView
+  '  * @description Is the class counterpart to BaseView component
+  '  *              used for MVC style programming
+  '  */
+  class BaseView extends mv.NodeClass
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Protected Fields
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    @inject("styleManager")
+    protected styleManager
+
+    protected isFocused = false
+    protected isShown = false
+    protected isLongPressStarted = false
+    protected longPressKey = ""
+    protected longPressTimer
+    protected focusedControl = invalid
+
+    private vm = invalid
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Initialization
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    function new(name as string)
+      super(name)
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ View Helpers
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    protected function initializeView(view as mc.types.node, args = invalid as mc.types.array)
+      if view <> invalid
+        view@._initialize(args)
+      else
+        m.log.error("view is invalid!")
+      end if
+    end function
+
+    protected function setFocus(target as mc.types.node, forceSet = false as boolean)
+      m.focusedControl = target
+      'bs:disable-next-line
+      mv.setFocus(target, forceSet)
+    end function
+
+    protected function setFocusLocked(target as mc.types.node, message = "" as string)
+      if target <> invalid
+        m.focusedControl = target
+      end if
+      'bs:disable-next-line
+      mv.setFocusLocked(target, message)
+    end function
+
+    protected function setFocusUnlocked(reason = "" as string)
+      'bs:disable-next-line
+      mv.setFocusUnlocked(reason)
+    end function
+
+    protected function isControlFocused(control as mc.types.node)
+      return m.focusedControl <> invalid and control <> invalid and m.focusedControl.id = control.id
+    end function
+
+    ' Given a datasource, applies the datamap to the controls
+    ' data maps are part of the maestro json-component spec and allow specifying the path to data
+    ' for a field
+    ' Views that create their child views from json, will automatically have a _dataMappedControlIds property, which tells this function which controls to apply the data source to.
+    ' Alternately, a _controls_ array can be used to apply the datamap to the passed in array of controls
+    protected function applyDataMapToControls(dataSource = invalid as dynamic, targetControls = invalid as mc.types.array) as boolean
+      if targetControls <> invalid
+        for each control in targetControls
+          mv.applyDataMap(control, dataSource)
+        end for
+        return true
+      end if
+      'bs:disable-next-line
+      if m._dataMappedControlIds = invalid
+        m.log.error("cannot apply data source, no explicit or implicit controls")
+        return false
+      end if
+      'bs:disable-next-line
+      for each id in m._dataMappedControlIds
+        control = m[id]
+        mv.applyDataMap(control, dataSource)
+      end for
+      return true
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ key support
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    private lastPressTime = 0
+
+    private function onKeyEvent(key as string, press as boolean) as boolean
+      result = false
+      timeNow = UpTime(0)
+      ' ? "key " ; key ; " P " ; press ; " " ; abs(timeNow - m.lastPressTime)
+      ' if abs(timeNow - m.lastPressTime) < 0.35 and press
+      ' ? " skipping rapid key"
+      '   m.lastPressTime = timeNow
+      '   return true
+      ' end if
+      m.lastPressTime = timeNow
+      if m.longPressKey <> ""
+        wasStarted = m.isLongPressStarted
+        m.toggleLongPressTimer(0)
+        if not wasStarted and mc.isFunction(m[`onKeyPress${key}`])
+          result = m[`onKeyPress${key}`]()
+        end if
+        return true
+      end if
+
+      if press
+        'bs:disable-next-line
+        if mc.isFunction(m.isAnyKeyPressLocked) and m.isAnyKeyPressLocked(key)
+          return true
+        end if
+        'bs:disable-next-line
+        if mc.isFunction(m.getLongPressIntervalForKey)
+          'bs:disable-next-line
+          longPressInterval = m.getLongPressIntervalForKey(key)
+          if longPressInterval > 0
+            m.log.info("entering long press for key ", key)
+            m.longPressKey = key
+            m.toggleLongPressTimer(longPressInterval)
+            return true
+          end if
+        end if
+
+        if mc.isFunction(m[`onKeyPress${key}`])
+          result = m[`onKeyPress${key}`]()
+        end if
+
+      end if
+
+      if result = invalid
+        result = false
+      end if
+
+      'bs:disable-next-line
+      if result = false and mc.isFunction(m.isCapturingAnyKeyPress)
+        'bs:disable-next-line
+        result = m.isCapturingAnyKeyPress(key, press)
+      end if
+
+      if result = invalid
+        result = false
+      end if
+
+      return result
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ long press support
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    protected function toggleLongPressTimer(interval as float)
+      if interval > 0
+        if m.longPressTimer = invalid
+          m.longPressTimer = mc.private.getMaestroPooledComponent("Timer")
+        end if
+        m.longPressTimer.duration = interval
+        m.longPressTimer.repeat = true
+        m.observeNodeField(m.longPressTimer, "fire", m.onLongPressTimerFire, "none")
+        m.longPressTimer.control = "start"
+      else
+        if m.longPressTimer <> invalid
+          m.unobserveNodeField(m.longPressTimer, "fire", m.onLongPressTimerFire)
+          m.longPressTimer.control = "stop"
+          m.longPressTimer.repeat = false
+          mc.private.releaseMaestroPooledComponent(m.longPressTimer)
+          m.longPressTimer = invalid
+        end if
+
+        if m.longPressKey <> ""
+          m.log.info("finishing longPress on key ", m.longPressKey)
+          'bs:disable-next-line
+          if m.isLongPressStarted and mc.isFunction(m.onLongPressFinish)
+            'bs:disable-next-line
+            m.onLongPressFinish(m.longPressKey)
+          end if
+          m.longPressKey = ""
+          m.isLongPressStarted = false
+        end if
+      end if
+    end function
+
+    protected function onLongPressTimerFire()
+      if m.isLongPressStarted
+        'bs:disable-next-line
+        if mc.isFunction(m.onLongPressUpdate)
+          'bs:disable-next-line
+          if not m.onLongPressUpdate(m.longPressKey)
+            m.log.info("long press was cancelled by the onLongPressUpdate call")
+            if mc.isFunction(m.toggleLongPressTimer)
+              m.toggleLongPressTimer(0)
+            end if
+          else
+            'will keep ticking
+            ' m.toggleLongPressTimer(m.longPressInterval)
+          end if
+        end if
+      else
+        'bs:disable-next-line
+        if mc.isFunction(m.onLongPressStart) and not m.onLongPressStart(m.longPressKey)
+          m.log.info("long press was rejected by onLongPressStart call")
+          key = m.longPressKey
+          m.toggleLongPressTimer(0)
+          if mc.isFunction(m[`onKeyPress${key}`])
+            m[`onKeyPress${key}`]()
+          end if
+        else
+          m.log.info("long press is accepted : starting for key ", m.longPressKey)
+          m.isLongPressStarted = true
+          'will keep ticking
+          ' m.toggleLongPressTimer(m.longPressInterval)
+        end if
+      end if
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Selection Support
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    protected function createSelection(initialItem as mc.types.node, action = "display" as string, actionInfo = {} as mc.types.assocarray, targetScreen = "" as string, selectionCompName = "mc_Selection" as string)
+      id = `${m.name}-${mc.getString(initialItem, "id")}-${action}`
+      selection = mc.createSGNode(selectionCompName, invalid, id, {
+        initialItem: initialItem
+        currentItem: initialItem
+        parentCollection: invalid
+        action: action
+        originScreen: m.getMField("top")
+        targetScreen: targetScreen
+        actionInfo: actionInfo
+      })
+
+      return selection
+    end function
+
+    protected function executeSelection(selection as mc.types.node, observeIfPendingAfterExecution = true as boolean)
+      'assumes that you have an appController instance that will handle the selection
+      appController = m.getInstance("appController")
+      if appController <> invalid
+        m.observeNodeField(selection, "itemCompletionState", m.onSelectionCompletionStateChange, "both", true)
+        result = appController@.onExecuteSelection(selection)
+        if result = invalid
+          m.log.error("Selection could not be executed. Do you have an appController assigned, with an onExecuteSelection method?")
+        else if result = true
+          m.log.info("selection was handled synchronously")
+        else
+          m.log.info("selection requires async resolution")
+          m.observeNodeField(selection, "state", m.onSelectionStateChange, "both", true)
+        end if
+      else
+        m.log.error("Selection could not be executed. There is no appController in the IOC")
+      end if
+    end function
+
+    protected function cancelPendingSelection(selection as mc.types.node)
+      m.unobserveNodeField(selection, "state")
+      m.unobserveNodeField(selection, "itemCompletionState")
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Lifecycle
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    protected function destroy()
+      m.log.method("destroy")
+      m.state = "destroyed"
+    end function
+
+    protected function onFirstShow()
+      m.isShown = true
+    end function
+
+    protected function onShow()
+      m.isShown = true
+    end function
+
+    protected function onHide()
+      m.isShown = false
+    end function
+
+    protected function onGainedFocus(isSelfFocused as boolean)
+      if isSelfFocused
+        m.isFocused = true
+        if m.focusedControl <> invalid
+          m.setFocus(m.focusedControl)
+        end if
+      end if
+    end function
+
+    protected function onLostFocus()
+      m.isFocused = false
+    end function
+
+    protected function onSelectionStateChange(state as string, selection as mc.types.node)
+      m.log.info("selection", mc.dv(selection), "changed state to", state)
+    end function
+
+    protected function onSelectionCompletionStateChange(completionState as string, selection as mc.types.node)
+      m.log.info("selection", mc.dv(selection), "changed completionState to", completionState)
+    end function
+
+    protected function onAddedToAggregateView(view as mc.types.node)
+    end function
+
+    protected function onRemovedFromAggregateView(view as mc.types.node)
+    end function
+
+  end class
+end namespace

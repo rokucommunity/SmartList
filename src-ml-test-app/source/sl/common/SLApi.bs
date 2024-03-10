@@ -1,0 +1,138 @@
+namespace sl.common
+  enum ViewMode
+    none = "none"
+    root = "root"
+    subPanel = "subPanel"
+  end enum
+
+  enum FocusAction
+    none = "none"
+    display = "display"
+  end enum
+
+  enum SelectionAction
+    none = "none"
+    focus = "focus"
+    select = "select"
+  end enum
+
+  enum HomeScreenSection
+    grid = "grid"
+    rails = "rails"
+    settings = "settings"
+    customRows = "customRows"
+    mixedContent = "mixedContent"
+    news = "News"
+  end enum
+
+  enum SettingsSection
+    network = "network"
+    system = "system"
+    accessibility = "accessibility"
+    audio = "audio"
+    privacy = "privacy"
+    paymentMethod = "paymentMethod"
+  end enum
+
+  enum State
+    none = "none"
+    loaded = "loaded"
+    loading = "loading"
+    error = "error"
+    success = "success"
+    cancel = "cancel"
+  end enum
+
+  enum KeyPress
+    none = "none"
+    left = "left"
+    right = "right"
+    up = "up"
+    down = "down"
+    select = "select"
+    back = "back"
+    rewind = "rewind"
+  end enum
+
+end namespace
+
+'FIXME - transpiler will generate these functions, or better still, directly transpile the json
+function mv_Label(args = {} as mc.types.assocarray, children = invalid as mc.types.array)
+  view = {
+    _type: "mv_Label"
+    _children: children
+  }
+  view.append(args)
+  return view
+end function
+
+function ImageFader(args = {} as mc.types.assocarray, children = invalid as mc.types.array)
+  view = {
+    _type: "ImageFader"
+    _children: children
+  }
+  view.append(args)
+  return view
+end function
+
+function mv_Poster(args = {} as mc.types.assocarray, children = invalid as mc.types.array)
+  view = {
+    _type: "mv_Poster"
+    _children: children
+  }
+  view.append(args)
+  return view
+end function
+
+function SL_BackgroundView(args = {} as mc.types.assocarray, children = invalid as mc.types.array)
+  view = {
+    _type: "sl_BackgroundView"
+    _children: children
+  }
+  view.append(args)
+  return view
+end function
+
+function mv_PanelController(args = {} as mc.types.assocarray, children = invalid as mc.types.array)
+  view = {
+    _type: "mv_PanelController"
+    _children: children
+  }
+  view.append(args)
+  return view
+end function
+
+function SL_BreadCrumbView(args = {} as mc.types.assocarray, children = invalid as mc.types.array)
+  view = {
+    _type: "sl_BreadCrumbView"
+    _children: children
+  }
+  view.append(args)
+  return view
+end function
+function SL_CollectionView(args = {} as mc.types.assocarray, children = invalid as mc.types.array)
+  view = {
+    _type: "sl_CollectionView"
+    _children: children
+  }
+  view.append(args)
+  return view
+end function
+
+function mv_Rectangle(args = {} as mc.types.assocarray, children = invalid as mc.types.array)
+  view = {
+    _type: "mv_Rectangle"
+    _children: children
+  }
+  view.append(args)
+  return view
+end function
+
+function Group(args = {} as mc.types.assocarray, children = invalid as mc.types.array)
+  view = {
+    _type: "Group"
+    _children: children
+  }
+  view.append(args)
+  return view
+end function

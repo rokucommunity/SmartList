@@ -1,0 +1,350 @@
+import "pkg:/source/view/BaseView.bs"
+
+namespace mv.controls
+  @observersWaitInitialize
+  @node("mv_Button", "mv_BaseView")
+  class Button extends mv.BaseView
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Events
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    @alwaysnotify
+    public selected as boolean
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Public Fields
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    @alwaysnotify
+    @observer("onStyleKeyChange")
+    public styleKey = "mv.Button.default"
+
+    @alwaysnotify
+    @observer("onStyleChange")
+    public style as mc.types.assocarray
+
+    @debounce
+    @alwaysnotify
+    @observer("redraw")
+    public text = ""
+
+    @debounce
+    @alwaysnotify
+    @observer("redraw")
+    public subText = ""
+
+    @debounce
+    @alwaysnotify
+    @observer("redraw")
+    public iconStyle as mc.types.assocarray
+
+    @debounce
+    @alwaysnotify
+    @observer("redraw")
+    public iconPosition = "center" 'none|left|right|center|centerLeft|centerRight
+
+    @debounce
+    @alwaysnotify
+    @observer("redraw")
+    public size = [300, 60]
+
+    @debounce
+    @alwaysnotify
+    @observer("redraw")
+    public isDisabled = false
+
+    @debounce
+    @alwaysnotify
+    @observer("redraw")
+    public isFocused = false
+
+    @debounce
+    @alwaysnotify
+    @observer("redraw")
+    public isSelected = false
+
+    @debounce
+    @alwaysnotify
+    @observer("redraw")
+    public autoSize = false
+
+    @debounce
+    @alwaysnotify
+    @observer("redraw")
+    public customLayout as mc.types.assocarray
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Private Fields
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    private _style as mc.types.assocarray
+    private loadedStyleKey = "none"
+    private isStyleSet = false
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ views
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    private label as mc.types.node
+    private subTextLabel as mc.types.node
+    private backgroundPoster as mc.types.node
+    private iconPoster as mc.types.node
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ initialization
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    function new()
+      super("mv_Button")
+    end function
+
+    protected override function initialize() as void
+      super.initialize()
+      m.createViews()
+      if m.style <> invalid and m.style.count() > 0
+        m.onStyleChange(m.style)
+      else
+        m.onStyleKeyChange(m.styleKey)
+      end if
+    end function
+
+    function createViews() as void
+      m.backgroundPoster = m.createSGNode("mv_Poster", m.top, "backgroundPoster")
+      m.iconPoster = m.createSGNode("mv_Poster", m.top, "iconPoster")
+      m.label = m.createSGNode("mv_Label", m.top, "label")
+      m.subTextLabel = m.createSGNode("mv_Label", m.top, "subTextLabel")
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ callbacks
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    private function onStyleChange(style as mc.types.assocarray)
+      if style <> invalid and style.count() > 0
+        m._style = style
+        m.isStyleSet = true
+        m.redraw()
+      end if
+    end function
+
+    private function onStyleKeyChange(key as string) as void
+      if m.loadedStyleKey = key
+        return
+      end if
+      m.loadedStyleKey = key
+      m._style = m.styleManager@.getStyle(key)
+      m.isStyleSet = m._style.count() > 0
+      m.redraw()
+    end function
+
+    private function redraw() as void
+      if not m.isStyleSet
+        return
+      end if
+
+      'hack to allow this view to work in xml
+      if m.label = invalid
+        m.createViews()
+      end if
+
+      m.applyState()
+
+      if m.autoSize
+        m.label.width = 0
+        m.subTextLabel.width = 0
+      end if
+
+      m.label.text = m.text
+      m.subTextLabel.text = m.subText
+
+      if m.customLayout <> invalid
+        m.applyCustomLayout()
+        return
+      end if
+
+      if m.autoSize
+        m.label.size = [m.label.boundingRect().width, m.label.size[1]]
+        m.subTextLabel.size = [m.subTextLabel.boundingRect().width, m.subTextLabel.size[1]]
+      end if
+
+      hasIcon = m.iconPosition <> "none" and m.iconStyle <> invalid and m.iconStyle.count() > 0
+      if not hasIcon
+        m.iconPoster.uri = ""
+        m.iconPoster.size = [0, 0]
+      end if
+
+      'TODO measure
+      size = m.autoSize ? m.calculateSize(hasIcon): m.size
+      m.layout(size, hasIcon)
+    end function
+
+    private function calculateSize(hasIcon as boolean)
+      sw = m.size[0]
+      sh = m.size[1]
+
+      w = m.label.size[0] + (m.label.translation[0] * 2)
+
+      iconPosition = m.iconPosition
+
+      if m.text = ""
+        w = 0
+      end if
+
+      if hasIcon
+        iw = m.iconPoster.width
+        ixOffset = 0
+        if iconPosition = "right" or iconPosition = "left"
+          ixOffset = m.iconPoster.translation[0]
+        end if
+
+        w += ixOffset + iw
+      else
+        'we've already correctly calculated this
+      end if
+
+      if w < sw
+        w = sw
+      end if
+      return [w, sh]
+    end function
+
+    private function layout(size as mc.types.array, hasIcon as boolean)
+      w = size[0]
+      h = size[1]
+      'note - all style sizes and translations have _only_ just been set at this point
+      iconSize = m.iconPoster.size
+      iconTranslation = m.iconPoster.translation
+      labelTranslation = m.label.translation
+      labelSize = asPoint(m.label.size)
+      subTextLabelTranslation = asPoint(m.subTextLabel.translation)
+      subTextLabelSize = asPoint(m.subTextLabel.size)
+
+      m.backgroundPoster.size = [w, h]
+      if hasIcon
+        iconPosition = m.iconPosition
+
+        if iconPosition = "none"
+          labelSize[0] = mc.clamp(w - (labelTranslation[0] * 2), 0, w)
+          subTextLabelSize[0] = mc.clamp(w - (subTextLabelTranslation[0] * 2), 0, w)
+
+        else if iconPosition = "center"
+          cw = w / 2
+          ch = h / 2
+          labelSize[0] = mc.clamp(w - (labelTranslation[0] * 2), 0, w)
+          subTextLabelSize[0] = mc.clamp(w - (subTextLabelTranslation[0] * 2), 0, w)
+          iconTranslation[0] = cw - ((iconTranslation[0]) + (iconSize[0] / 2))
+          iconTranslation[1] = ch - ((iconTranslation[1]) + (iconSize[1] / 2))
+
+        else if iconPosition = "left"
+          labelSize[0] = mc.clamp(w - (labelTranslation[0] * 2) - iconSize[0], 0, w)
+          subTextLabelSize[0] = mc.clamp(w - (subTextLabelTranslation[0] * 2), 0, w)
+          subTextLabelSize[0] = [iconTranslation[0] + iconSize[0], subTextLabelSize[1]]
+          labelTranslation = [iconTranslation[0] + labelTranslation[0] + iconSize[0], labelTranslation[1]]
+
+        else if iconPosition = "right"
+          ch = h / 2
+          subTextLabelSize[0] = mc.clamp(w - (subTextLabelTranslation[0] * 2 - iconSize[0]), 0, w)
+          iconTranslation[1] = ch - ((iconTranslation[1]) + (iconSize[1] / 2))
+          iconTranslation = [w - iconTranslation[0] - iconSize[0], iconTranslation[1]]
+
+        else if iconPosition = "centerLeft"
+          cw = w / 2
+          ch = h / 2
+
+          iconTranslation[0] = cw / 2 - iconSize[0] / 2
+          iconTranslation[1] = ch - ((iconTranslation[1]) + (iconSize[1] / 2))
+          labelTranslation = [(iconTranslation[0] * 2) + iconSize[0], labelTranslation[1]]
+          labelSize[0] = mc.clamp(w - (labelTranslation[0] * 2) - iconSize[0], 0, w)
+          subTextLabelSize[0] = mc.clamp(w - (subTextLabelTranslation[0] * 2), 0, w)
+
+        else if iconPosition = "centerRight"
+          cw = w / 2
+          ch = h / 2
+
+          iconTranslation[0] = cw + cw / 2 - iconSize[0] / 2
+          iconTranslation[1] = ch - ((iconTranslation[1]) + (iconSize[1] / 2))
+          subTextLabelSize[0] = mc.clamp(w - (subTextLabelTranslation[0] * 2), 0, w)
+        end if
+      else
+        labelSize[0] = mc.clamp(w - (labelTranslation[0] * 2), 0, w)
+        subTextLabelSize[0] = mc.clamp(w - (subTextLabelTranslation[0] * 2), 0, w)
+      end if
+
+      m.label.width = labelSize[0]
+      m.label.translation = labelTranslation
+      m.subTextLabel.width = subTextLabelSize[0]
+      m.subTextLabel.translation = subTextLabelTranslation
+      m.iconPoster.translation = iconTranslation
+
+    end function
+
+    private function applyCustomLayout()
+      m.backgroundPoster.size = asPoint(m.size)
+      m.label.vertAlign = "top"
+      m.label.horizAlign = "left"
+      m.label.translation = asPoint(m.customLayout.labelTranslation)
+      m.subTextLabel.translation = asPoint(m.customLayout.subTextLabelTranslation)
+      m.iconPoster.size = asPoint(m.customLayout.iconSize)
+      m.iconPoster.translation = asPoint(m.customLayout.iconTranslation)
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Private Methods
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    private function applyState() as void
+
+      m.updateViewsWithStyleJson(asAA(m._style.normal))
+
+      normalIconStyle = asAA(m.iconStyle.normal, m.iconStyle)
+      m.iconPoster.setFields(normalIconStyle)
+
+      if m.isDisabled
+        m.updateViewsWithStyleJson(asAA(m._style.disabled))
+        m.iconPoster.setFields(asAA(m.iconStyle.disabled, normalIconStyle))
+      else if m.isSelected
+        m.updateViewsWithStyleJson(asAA(m._style.selected))
+        m.iconPoster.setFields(asAA(m.iconStyle.selected, normalIconStyle))
+      else if m.isFocused
+        m.updateViewsWithStyleJson(asAA(m._style.focused))
+        m.iconPoster.setFields(asAA(m.iconStyle.focused, normalIconStyle))
+      end if
+    end function
+
+    protected override function updateViewsWithStyleJson(json as dynamic, mTarget = invalid as mc.types.assocarray)
+      super.updateViewsWithStyleJson(json, mTarget)
+      if json.iconStyle <> invalid
+        m.iconStyle = json.iconStyle
+      end if
+      if json.iconPosition <> invalid
+        m.iconPosition = json.iconPosition
+      end if
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Key Presses
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    private function onKeyPressOK() as boolean
+      m.selected = true
+      return true
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Lifecycle
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    protected override function onGainedFocus(isSelfFocused as boolean)
+      super.onGainedFocus(isSelfFocused)
+      if isSelfFocused
+        m.redraw()
+      end if
+    end function
+
+    protected override function onLostFocus()
+      super.onLostFocus()
+      m.redraw()
+    end function
+
+  end class
+end namespace

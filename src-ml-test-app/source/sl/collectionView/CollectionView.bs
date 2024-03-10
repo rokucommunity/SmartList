@@ -1,0 +1,671 @@
+import "pkg:/source/view/BaseView.bs"
+import "pkg:/source/view/Animation.bs"
+import "pkg:/source/sl/collectionView/HorizontalRow.bs"
+import "pkg:/source/sl/collectionView/ContentFetcher.bs"
+import "pkg:/source/sl/collectionView/ViewDecorationManager.bs"
+import "pkg:/source/sl/collectionView/CollectionViewFocusManager.bs"
+import "pkg:/source/sl/collectionView/ContentManager.bs"
+import "pkg:/source/sl/common/SLApi.bs"
+
+namespace sl.collectionView
+
+  @observersWaitInitialize
+  @node("sl_CollectionView", "mv_BaseView")
+  class CollectionView extends mv.BaseView
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Public Fields
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    @observer("onAnimateToRowIndex")
+    @alwaysNotify
+    animateToRowIndex = -1
+
+    @observer("onAnimatToItemIndex")
+    @alwaysNotify
+    animateToItemIndex = -1
+
+    dummyContent as mc.types.node
+    selectedIndices = [-1, -1]
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Views
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    private container as mc.types.node
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Private Fields
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    @inject("componentPool")
+    private componentPool
+
+    private speed = 30
+    private direction = 1
+
+    'index tracking
+    private index = -1
+    private startIndex = -1
+    private targetIndex = -1
+    private currentIndex = -1
+
+    private frameAnimation as mv.animations.Generic
+    private frameTimer = createObject("roTimespan")
+    private deltaTime = 0
+    private lastFrameTime = 0
+
+    private rows = []
+
+    private viewportHeight = 1080
+    private virtualY = 0
+
+    private content
+
+    private isContentSet = false
+    private isActive = false
+    private numberOfItems = 0
+
+    private decorationManager = new sl.collectionView.ViewDecorationManager(m)
+    private focusManager = new sl.collectionView.CollectionViewFocusManager(m)
+    private contentManager = new sl.collectionView.ContentManager(m)
+    private contentFetcher = new sl.collectionView.ContentFetcher(m)
+
+    'cache some key events for reuse
+    private renderChangeEvent = new sl.collectionView.ApplyChangesRenderEvent()
+    protected renderEvent = new sl.collectionView.ScreenRenderEvent(0)
+
+    private focusedRowIndex = 0
+    private focusedItemIndex = 0
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Initialization
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    function new()
+      super("ListScreen")
+    end function
+
+    protected override function initialize()
+      super.initialize()
+      m.log.info("Intiializing newListScreen")
+      m.createViews()
+      m.invalidateLayout()
+      m.initializeFrameTimer()
+      m.dummyContent = m.createSGNode("ContentNode", invalid, "dummy")
+    end function
+
+    private function createViews()
+      m.container = m.createSGNode("Group", m.top)
+      m.focusManager.focusRectangle = m.createSGNode({
+        id: "focusRectangle"
+        _type: "mv_Poster"
+        uri: "pkg:/images/input-focusrect.9.png"
+        visible: false
+      }, m.top)
+    end function
+
+    private function initializeFrameTimer()
+      m.frameAnimation = new mv.animations.Generic(m.top, 99999)
+      m.frameAnimation.observeFraction(m.onFrameAnimationFraction)
+      m.onAnimateToRowIndex(0)
+    end function
+
+
+    private isRendered = false
+    private function invalidateLayout(firstRowIndex = 0 as integer)
+      m.log.info("invalidating layout")
+
+      y = asInteger(m.rows[firstRowIndex].renderedListPosition)
+      for i = firstRowIndex to m.rows.count() - 1
+        m.rows[i].renderedListPosition = y
+        y += m.rows[i].height
+      end for
+
+      if not m.isRendered
+        m.log.info("Colllection view was not rendered after load")
+        m.focusManager.setNextFocusInfo(m.getFocusInfo(0, 0))
+        m.renderVisibleRows()
+        m.isRendered = true
+      end if
+    end function
+
+    private function setActive(active as boolean)
+      m.log.info("isActive? ", active)
+      m.isActive = active
+      'TODO = free up cells for reuse
+      if active
+        m.frameAnimation.start()
+        'TODO - load current view
+        m.contentFetcher.loadNextRows(m.rows[0])
+      else
+        m.frameAnimation.stop()
+      end if
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Public Methods
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    function setContent(content as mc.types.node)
+      m.log.info("content has been set")
+      m.content = content
+      m.isContentSet = true
+      m.decorationManager.enabled = false
+      ' m.decorationManager.enabled = m.content.isDecorationSupported
+      m.createRows()
+      m.numberOfItems = content.getChildCount()
+      m.invalidateLayout()
+      m.setInterval(m.onUpdateData, 0.7)
+
+      if m.isActive
+        m.log.info("This collection view is active - updating now")
+        m.renderVisibleRows()
+        m.focusManager.renderCurrentFocusInfo()
+      end if
+    end function
+
+
+    private function onUpdateData()
+      index = m.getFocusedRowIndex()
+      'update a bunch of rows randomly..
+      for i = index to index + 3
+        rowContent = m.content.getChild(i)
+        if rowContent <> invalid
+          ? " UPDATE ROW " rowContent.getChildCount()
+          for j = 0 to 10
+            child = rowContent.getChild(j)
+            ? " UPDATE CHILD "
+            if child <> invalid
+              child.title = rnd(1000).toStr()
+            end if
+          end for
+        end if
+      end for
+    end function
+
+
+    private function createRows()
+      m.log.info("CREATING ROWS")
+
+      'we create cheap virtual rows for our content, to make life simple.
+      for each rowContent in m.content.getChildren(-1, 0)
+        row = new sl.collectionView.HorizontalRow(m, rowContent)
+        m.rows.push(row)
+      end for
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Protected Methods
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    protected function getFocusedRowIndex()
+      return m.focusedRowIndex
+    end function
+
+    protected function getFocusInfo(rowIndex as integer, itemIndex = -1 as integer)
+      row = m.getRowForIndex(rowIndex)
+      if row <> invalid
+        return row.getFocusInfo(itemIndex)
+      else
+        return invalid
+      end if
+    end function
+
+    protected function getFocusedRow()
+      return m.rows[m.focusedRowIndex]
+    end function
+
+    protected function getRowForIndex(index as integer)
+      return m.rows[index]
+    end function
+
+    protected function getRowForContent(content as mc.types.node)
+      'Crude for now - will have a proper lookup for this later
+      return m.rows[content.index]
+    end function
+
+    protected function applyChangesToRows(changeEvents as mc.types.array, animated as boolean)
+      'TODO add animation support
+
+      for each event in changeEvents
+        row = m.getRowForContent(event.content)
+        m.renderChangeEvent.changes = event.changes
+        m.renderEvent.isForced = true
+        row.render(m.renderChangeEvent)
+      end for
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Callbacks
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    private function onAnimateToRowIndex(index as integer)
+      m.startIndex = m.getFocusedRowIndex()
+      m.targetIndex = mc.clamp(index, 0, m.numberOfItems)
+      m.log.info("onAnimateToRowIndex ", index)
+      m.log.info("startIndex", m.startIndex, "targetIndex", m.targetIndex)
+
+      if m.startIndex > m.targetIndex
+        m.direction = -1
+      else
+        m.direction = 1
+      end if
+
+      m.focusManager.setNextFocusInfo(m.getFocusInfo(m.startIndex + m.direction))
+      m.updateFocusTrackingFields()
+    end function
+
+    private function onAnimatToItemIndex(index as integer)
+      row = m.rows[m.focusedRowIndex]
+      m.log.info("Animating to row ", row.index, " item ", index)
+      if row <> invalid
+        row.animateToItemIndex(index)
+      end if
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Frame Timer
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    isSkipped = true
+    private function onFrameAnimationFraction(fraction as float)
+      m.updateFrameTimer()
+      'skip every other frame
+      ' if not m.isSkipped
+      m.tick()
+      ' end if
+      ' m.isSkipped = not m.isSkipped
+    end function
+
+    private function updateFrameTimer()
+      time = m.frameTimer.totalMilliseconds()
+      if m.lastFrameTime > 0
+        ' Calculate delta time in seconds
+        m.deltaTime = (time - m.lastFrameTime) / 1000.0
+      end if
+      m.lastFrameTime = time
+    end function
+
+    'Main Run loop
+    private function tick()
+      if m.isContentSet 'FIXME - do not tick if content is not set
+        if m.targetIndex <> m.startIndex
+          m.animateBetweenIndexes()
+        else
+          m.renderCurrentRow()
+        end if
+      end if
+    end function
+
+    private function renderCurrentRow()
+      row = m.getFocusedRow()
+      if row <> invalid
+        rowY = m.decorationManager.getModifiedRowPosition(row, row.renderedListPosition - m.virtualY)
+        m.renderEvent.position = rowY
+        m.renderEvent.isForced = false
+        m.renderEvent.virtualX = invalid
+        row.render(m.renderEvent)
+      end if
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Scroling Methods
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    'TODO - move this into a common scroller class
+    @optimize("this should be an item scroller - very similar code in BaseCollectionViewRow")
+    function animateBetweenIndexes() as void
+      if m.targetIndex = m.startIndex or m.targetIndex < 0 ' No need to animate if indices are the same
+        m.log.info("indexes are the same or out of range - not animating S:", m.startIndex, "T:", m.targetIndex)
+        return
+      end if
+
+      if m.targetIndex >= m.numberOfItems
+        m.log.warn("Attempt to animate past last item - not animating")
+        m.targetIndex = m.numberOfItems - 1
+      end if
+
+      ' Calculate target Y position
+      targetY = m.rows[m.targetIndex].renderedListPosition
+
+      remainingDistance = targetY - m.virtualY
+
+      ' m.log.info("animating to", m.targetIndex, "targetY", targetY, "vy", m.virtualY, "remainingDistance", remainingDistance)
+      ' m.log.info("direction", m.direction)
+
+      ' Calculate the movement amount for this frame, ensuring it does not exceed the remaining distance
+      movementAmount = m.direction * mc.min(abs(m.speed), abs(remainingDistance))
+
+      m.virtualY += movementAmount
+
+      ' Clamp virtualY to ensure it doesn't go beyond the scrollable content
+      m.virtualY = mc.max(m.virtualY, 0)
+
+      ' Update visible rows based on the new virtualY position
+      m.updateRowVisibility()
+      m.renderVisibleRows()
+      m.updateFocusTracker()
+      m.decorationManager.render()
+
+      ' Check if the animation has reached or is very close to the target
+      if abs(m.virtualY - targetY) < 1 ' Use a small threshold to determine "completion"
+
+        m.virtualY = targetY ' Snap to the exact target to avoid floating-point drift
+        m.startIndex = m.targetIndex ' Update startIndex to reflect the animation's completion
+        m.log.info("finished animation, VY", m.virtualY, "index", m.startIndex, "vy", m.virtualY)
+      end if
+    end function
+
+    private function easeOutCubic(currentTime as integer, startValue as integer, changeInValue as integer, duration as integer)
+      currentTime = currentTime / duration - 1
+      return changeInValue * (currentTime * currentTime * currentTime + 1) + startValue
+    end function
+
+    private visibleRows = []
+
+    private function renderVisibleRows()
+      ' m.log.info("Rendering visible rows")
+
+      firstVisibleRow = mc.max(m.findFirstVisibleRow(m.virtualY) - 1, 0)
+
+      ' Initialize variables to track the cumulative height as we iterate through rows
+      ' and determine the last visible row.
+      lastVisibleRow = firstVisibleRow
+      currentY = 0
+      if firstVisibleRow < m.rows.count()
+        currentY = m.rows[firstVisibleRow].renderedListPosition
+      end if
+
+      ' Iterate through the rows starting from the first visible row until we reach
+      ' the end of the viewport.
+      ' m.log.info("nextNV Row:", m.focusedRowIndex, "virtualY", m.virtualY, "fvr", firstVisibleRow, "rows", m.rows.count())
+
+      while lastVisibleRow < m.rows.count() and currentY <= (m.virtualY + m.viewportHeight)
+        rowHeight = m.rows[lastVisibleRow].height
+        if rowHeight = 0
+          lastVisibleRow += 1
+        else
+          currentY += rowHeight
+          if currentY > m.virtualY
+            lastVisibleRow += 1
+          end if
+        end if
+      end while
+
+      m.visibleRows = []
+      ' Now, update the visibility and render each visible row based on the updated range.
+      for i = firstVisibleRow to lastVisibleRow
+        if i >= 0 and i < m.rows.count()
+
+          row = m.rows[i]
+          ' m.log.info("render∞ing row", i, row.content.title, m.virtualY)
+          ' Calculate the y position where the row should be rendered within the viewport.
+          rowY = m.decorationManager.getModifiedRowPosition(row, row.renderedListPosition - m.virtualY)
+          m.renderEvent.position = rowY
+          m.renderEvent.isForced = true
+          m.renderEvent.virtualX = invalid
+          row.render(m.renderEvent)
+        end if
+      next
+    end function
+
+    @optimizeThis
+    function updateRowVisibility()
+      visibleRows = m.calculateVisibleRows()
+      m.currentIndex = visibleRows.firstVisible
+
+      ' Loop through all rows and check their visibility status
+      for rowIndex = 0 to m.rows.count() - 1
+        row = m.rows[rowIndex]
+
+        'TODO - have separate notion for currentIndex and focusedIndex
+        ' Check if the row is now visible and was not visible before
+        if rowIndex >= visibleRows.firstVisible and rowIndex <= visibleRows.lastVisible
+          if not row.isOnScreen
+            row.onEnterScreen()
+            m.contentFetcher.loadNextRows(row)
+          end if
+        else
+          if row.isOnScreen
+            row.onExitScreen()
+          end if
+        end if
+      next
+    end function
+
+    @optimizeThis
+    private function findFirstVisibleRow(virtualY as float) as integer
+      low = 0
+      high = m.rows.count() - 1
+
+      while low <= high
+        mid = low + (high - low) \ 2
+        rowTopY = m.rows[mid].renderedListPosition
+        rowBottomY = rowTopY + m.rows[mid].height
+
+        if rowBottomY > virtualY
+          high = mid - 1
+        else
+          low = mid + 1
+        end if
+      end while
+
+      return mc.clamp(low, 0, m.numberOfItems - 1) ' The first row that is partly or fully visible
+    end function
+
+    @optimizeThis
+    function calculateVisibleRows() as object
+      firstVisibleRow = m.findFirstVisibleRow(m.virtualY)
+      lastVisibleRow = firstVisibleRow
+      ' m.log.info("finding first visible row", m.rows.count(), "first visible row", firstVisibleRow, "virtualY", m.virtualY, "vpheight", m.viewportHeight)
+
+      currentY = m.rows[firstVisibleRow].renderedListPosition
+
+      while lastVisibleRow < m.rows.count() and currentY < (m.virtualY + m.viewportHeight)
+        rowHeight = m.rows[lastVisibleRow].height
+        if rowHeight = 0
+          lastVisibleRow += 1
+        else
+          currentY += rowHeight
+          if currentY > m.virtualY
+            lastVisibleRow += 1
+          end if
+        end if
+      end while
+
+      return { firstVisible: firstVisibleRow, lastVisible: mc.clamp(lastVisibleRow - 1, 0, m.numberOfItems) }
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Focus Methods
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    'TODO - this belongs in a scroller class
+    private nextRowIndex = 0
+    private lastFocusedVirtualPosition = 0
+    private nextVirtualPosition = 0
+    private distanceToTravel = 0
+
+    private function updateFocusTracker()
+      percentToNextRow = m.getFocusPercent()
+      m.decorationManager.rowScrollPercent = percentToNextRow
+      m.focusManager.renderWhileMovingBetweenItems(percentToNextRow)
+      ' ? "% is " percentToNextRow
+      if percentToNextRow >= 1
+        m.log.info("completed focus on row")
+        m.updateFocusTrackingFields()
+        m.focusManager.setNextFocusInfo(m.getFocusInfo(m.nextRowIndex))
+      end if
+    end function
+
+    'Call this every time we reach focus 1 while scrolling
+    private function updateFocusTrackingFields() as void
+      ? " UPDATING TRACKING FIELD FOR LIST"
+      if m.rows.count() = 0
+        m.log.warn("cannot track: no rows")
+        return
+      end if
+      m.nextRowIndex = mc.clamp(m.getFocusedRowIndex() + m.direction, 0, m.numberOfItems - 1)
+      row = m.rows[m.nextRowIndex]
+      if row = invalid
+        m.log.warn("cannot track: no row for index", m.nextRowIndex)
+
+        return
+      end if
+      m.lastFocusedVirtualPosition = m.virtualY
+      m.nextVirtualPosition = row.renderedListPosition
+      m.distanceToTravel = abs(m.nextVirtualPosition - m.lastFocusedVirtualPosition)
+
+      m.log.info("got tracking fields", m.nextRowIndex, "LFVP", m.virtualY, m.distanceToTravel, "DTT", m.distanceToTravel)
+
+    end function
+
+    'TODO move this into a common scroller class
+    function getFocusPercent()
+      if m.distanceToTravel = 0 or m.nextVirtualPosition = -1 or m.lastFocusedVirtualPosition = -1
+        ? " BAIL GET PERCENT " m.distanceToTravel m.nextVirtualPosition m.lastFocusedVirtualPosition
+        return 0
+      end if
+
+      virtualPosition = m.virtualY
+
+      ' Calculate the remaining distance to travel based on current scroll position
+      remainingDistanceToTravel = 0
+      if m.direction > 0 ' Scrolling down/right
+        remainingDistanceToTravel = m.nextVirtualPosition - virtualPosition
+      else if m.direction < 0 ' Scrolling up/left
+        remainingDistanceToTravel = virtualPosition - m.nextVirtualPosition
+      end if
+
+      focusPercent = 1.0 - (remainingDistanceToTravel / m.distanceToTravel)
+      focusPercent = mc.clamp(focusPercent, 0, 1.0)
+      ' ? "LIST FOCUS PERCENT " focusPercent
+      return focusPercent
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ KeyPresses
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    private function onKeyPressFastForward() as boolean
+      m.speed = mc.clamp(m.speed + 5, 5, 3000)
+      ? " speed is now " m.speed
+      return true
+    end function
+
+    private function onKeyPressRewind() as boolean
+      m.speed = mc.clamp(m.speed - 5, 5, 3000)
+      ? " speed is now " m.speed
+      return true
+    end function
+
+    private function onKeyPressRight() as boolean
+      return m.handleRowKeyPress(sl.common.KeyPress.right, false)
+    end function
+
+    private function onKeyPressLeft() as boolean
+      return m.handleRowKeyPress(sl.common.KeyPress.left, false)
+    end function
+
+    private function getLongPressIntervalForKey(key as string) as float
+      if key = sl.common.KeyPress.back
+        return 0
+      end if
+      return 0.5
+    end function
+
+    private function onLongPressStart(key as string) as boolean
+      m.log.info("Starting long press on key", key)
+
+      if key = sl.common.KeyPress.up
+        m.onAnimateToRowIndex(0)
+      else if key = sl.common.KeyPress.down
+        m.onAnimateToRowIndex(m.rows.count() - 1)
+      else if key = sl.common.KeyPress.right or key = sl.common.KeyPress.left
+        m.handleRowKeyPress(key, true)
+      end if
+      return true
+    end function
+
+    private function onLongPressFinish(key as string) as boolean
+      m.log.info("finsihed long press on key", key, "focused index is ", m.getFocusedRowIndex())
+      if key = sl.common.KeyPress.up
+        m.onAnimateToRowIndex(m.getFocusedRowIndex() - 1)
+      else if key = sl.common.KeyPress.down
+        m.onAnimateToRowIndex(m.getFocusedRowIndex() + 1)
+      else if key = sl.common.KeyPress.right or key = sl.common.KeyPress.left
+        m.handleRowKeyPress(key, false)
+      end if
+      return true
+    end function
+
+    private function handleRowKeyPress(key as sl.common.KeyPress, isLongPress as boolean)
+      row = m.getFocusedRow()
+      if row = invalid
+        return false
+      end if
+      nextIndex = row.getItemIndexForKeyPress(key, isLongPress)
+      m.log.info("Handling a row key press:", key, "long?", isLongPress, "nextIndex", nextIndex)
+      if nextIndex <> -1
+        m.onAnimatToItemIndex(nextIndex)
+        return true
+      else
+        return false
+      end if
+    end function
+
+    private function onKeyPressUp() as boolean
+      m.log.info("Pressed down - animating to previous row cf", m.getFocusedRowIndex())
+      m.onAnimateToRowIndex(mc.clamp(m.getFocusedRowIndex() - 1, 0, m.rows.count() - 1))
+      return true
+    end function
+
+    private function onKeyPressDown() as boolean
+      m.log.info("Pressed down - animating to next row - cf", m.getFocusedRowIndex())
+      m.onAnimateToRowIndex(mc.clamp(m.getFocusedRowIndex() + 1, 0, m.rows.count() - 1))
+      return true
+    end function
+
+    private function onKeyPressOK() as boolean
+      m.log.info("selected item")
+      m.selectedIndices = [0, m.getFocusedRowIndex()]
+      return true
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Lifecycle Methods
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    protected override function onFirstShow()
+      super.onFirstShow()
+    end function
+
+    protected override function onShow()
+      m.log.info("onShow")
+      super.onShow()
+      m.log.info("showing list, activating frame tifmer")
+
+      m.setActive(true)
+    end function
+
+    protected override function onHide()
+      super.onHide()
+      m.log.info("hiding list, deactivating frame timer")
+
+      m.setActive(false)
+    end function
+
+    protected override function onGainedFocus(isSelfFocused as boolean)
+      super.onGainedFocus(isSelfFocused)
+      if isSelfFocused
+        m.focusManager.renderCurrentFocusInfo()
+        m.focusManager.setFocusShown(true)
+      end if
+    end function
+
+    protected override function onLostFocus()
+      super.onLostFocus()
+      m.focusManager.setFocusShown(false)
+    end function
+  end class
+end namespace

@@ -1,0 +1,119 @@
+import "pkg:/source/roku_modules/log/LogMixin.brs"
+import "pkg:/source/core/Tasks.bs"
+import "pkg:/source/core/MIOC.bs"
+import "pkg:/source/view/BaseView.bs"
+
+namespace mv
+  ' /**
+  '  * @module BaseScreen
+  '  * @description Class based counterpart to BaseView component
+  '  *              used for MVC style programming
+  '  */
+  class BaseScreen extends mv.BaseView
+
+    'field to allow for convenient tracking of a view
+    @alwaysnotify
+    public state as string
+
+    'the selection object that lead to this view being created
+    public originSelection as mc.types.node
+
+    function new(name as string)
+      super(name)
+    end function
+
+    protected override function initialize()
+      super.initialize()
+      'bs:disable-next-line
+      m.originSelection = m.top.originSelection
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ nav support
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    'Note the following methods are proxies to facilitate testing.
+    'All of them will call out to the top level scope
+
+    ' /**
+    '  * @member push
+    '  * @memberof module:BaseViewModel
+    '  * @instance
+    '  * @function
+    '  * @description wrapper for push
+    '  * @param {view} the view to push, if this is a string, then it is looked up on m - so you can push views by their id, as well as actual views
+    '  */
+    protected function push(view as mc.types.node, animated = true as boolean)
+      'bs:disable-next-line
+      push(view, animated)
+    end function
+
+    protected function pop(animated = true as boolean) as mc.types.node
+      'bs:disable-next-line
+      return(pop(animated))
+    end function
+
+    protected function resetNavControllerToRoot(animated = true as boolean)
+      'bs:disable-next-line
+      resetNavControllerToRoot(animated)
+    end function
+
+    protected function getNavController()
+      'bs:disable-next-line
+      return getNavController()
+    end function
+
+    protected function resetNavController(newFirstScreen = invalid as mc.types.node, endIndex = -1 as integer, animated = false as boolean)
+      'bs:disable-next-line
+      resetNavController(newFirstScreen, endIndex, animated)
+    end function
+
+    protected function dismiss(state as string, animated = true as boolean)
+      if m.getTopField("navController") <> invalid and m.getTopField("isPoppingWhenDismissed") <> false
+        m.pop(animated)
+      end if
+
+      if state <> invalid
+        m.state = state
+        'This cannot be inferred because this is an abstract node class
+        'bs:disable-next-line
+        m.top.state = state
+      end if
+    end function
+
+    protected function replaceNavControllerScreen(targetScreen as mc.types.node, animated = false as boolean)
+      'bs:disable-next-line
+      replaceNavControllerScreen(targetScreen, animated)
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Key Presses
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    protected function onKeyPressBack() as boolean
+      m.log.info("dismissing this screen, due to back key press")
+      m.dismiss("cancel")
+      return true
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Lifecycle Methods
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    protected function cleanup()
+      m.log.info("using default cleanup strategy for screen:", mc.dv(m.__classname))
+
+      'bs:disable-next-line
+      if m.list <> invalid and m.list.isSubType("ml_List")
+        m.log.info("Resetting list content so it will free up renderers")
+        'bs:disable-next-line
+        m.list.content = ml.listMixin.createListContent()
+      end if
+    end function
+
+    protected override function onRemovedFromAggregateView(view as mc.types.node)
+      super.onRemovedFromAggregateView(view)
+      m.cleanup()
+    end function
+
+  end class
+end namespace

@@ -1,0 +1,73 @@
+import "pkg:/source/view/BaseView.bs"
+import "pkg:/source/sl/common/SLApi.bs"
+namespace sl
+
+  @observersWaitInitialize
+  @node("sl_BackgroundView", "mv_BaseView")
+  class SLBackgroundView extends mv.BaseView
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Views
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    private randomResourceUser as mc.types.node
+    private poster as mc.types.node
+    private headerPoster as mc.types.node
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Private Fields
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    private content as mc.types.node
+    private defaultBackgroundImage = "pkg:/images/home/home-bg-$$RES$$.webp"
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Initialization
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    function new()
+      super("GCBackgroundView")
+    end function
+
+    protected override function initialize()
+      super.initialize()
+      m.createViews()
+      m.setContent(invalid)
+    end function
+
+    private function createViews()
+      m.createUI([
+        ImageFader({
+          id: "poster"
+        })
+        mv_Poster({
+          id: "headerPoster"
+          translation: [0, 0]
+          size: [1920, 166]
+        })
+      ])
+      ' m.randomResourceUser = m.createSGNode("RandomResourceUser", m.top, "randomResourceUser")
+      ' m.randomResourceUser.scale = [4, 4]
+      ' m.randomResourceUser.translation = [1550, 700]
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Public Methods
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    function setContent(content as mc.types.node)
+      m.content = content
+      if asString(content.backgroundImage) <> ""
+        m.poster.uri = content.backgroundImage
+      else
+        m.poster.uri = m.defaultBackgroundImage
+      end if
+      if asString(content.bannerImage) <> ""
+        m.headerPoster.uri = content.bannerImage
+      else
+        m.headerPoster.uri = ""
+      end if
+    end function
+
+  end class
+end namespace

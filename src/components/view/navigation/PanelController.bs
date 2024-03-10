@@ -1,0 +1,246 @@
+import "pkg:/source/core/Collections.bs"
+import "pkg:/source/view/Animation.bs"
+
+function init()
+  m.log.info("init")
+  m.viewStack = []
+  m.tempTransition = false
+  m.top.shouldRemoveFromAggregateView = false
+  m.top.isTransitionManagingChildren = false
+  m.top.isSettingCurrentViewOnViewStackChange = false
+  m.container = m.top.findNode("container")
+  m.childContainer = m.top.findNode("childContainer")
+  m.top.observeFieldScoped("activeIndex", "onActiveIndexChange")
+  m.moveAnim = mv.animations.Move(m.container, 0.2, [0, 0], [0, 0])
+end function
+
+function onActiveIndexChange(event as object)
+  index = event.getData()
+  m.log.info("Changed active index to", index)
+
+  'Animate to index
+  moveToIndex(index, true)
+end function
+
+function moveToIndex(index as integer, animated as boolean) as void
+  m.log.info("animating to index", index, "aniamted", animated)
+  if index < 0 or index >= m.viewStack.count()
+    m.log.info("Ignoring change to invalid index")
+    return
+  end if
+
+  child = m.childContainer.getChild(index)
+  if child <> invalid
+    m.top.currentView = child
+    newTranslation = [-child.translation[0] + m.top.leftMargin, 0]
+    if index > 0
+      newTranslation[0] += 50
+    end if
+    if animated
+      m.moveAnim.animateTo(newTranslation)
+      m.moveAnim.start()
+    else
+      m.container.translation = newTranslation
+    end if
+    if m.top.isFocused or m.top.isChildFocused
+      onGainedFocus(true)
+    end if
+  else
+    m.log.warn("ignoring change to invalid index")
+  end if
+end function
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+'++ public api
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+function push(view as mc.types.node, animated = true as boolean, transition = invalid as mc.types.node) as void
+  m.log.method("push")
+  if view = invalid
+    m.log.warn(" push invalid view passed in : ignoring")
+    return
+  end if
+  m.top.shouldRemoveFromAggregateView = false
+  m.tempTransition = transition
+
+  m.log.info("pushing ", view.subType())
+  m.viewStack.push(view)
+  view.navController = m.top
+  updatePublicFields()
+
+  'for a navcontroller we are added here
+  m.top.pushedView = view
+  transitionToView(view, animated)
+end function
+
+function reset(newFirstScreen = invalid as mc.types.node, endIndex = -1 as integer, animated = false as boolean, transition = invalid as mc.types.node)
+  m.log.info(" reset ", m.top.numberOfViews)
+  if endIndex < -1
+    endIndex = -1
+  end if
+
+  m.tempTransition = transition
+
+  m.log.info("endIndex is", endIndex)
+  index = m.top.numberOfViews - 1
+  while index > endIndex
+    m.log.info("resetting index ", index)
+    view = m.viewStack.Pop()
+    if view <> invalid
+      hideView(view)
+      view.navController = invalid
+      view@.onRemovedFromAggregateView(m.top)
+    else
+      m.log.info(" reset found invalid child")
+    end if
+    index--
+  end while
+
+  updatePublicFields()
+
+  if newFirstScreen <> invalid
+    m.log.info("new first screen ", newFirstScreen.subType())
+    push(newFirstScreen, animated)
+  else if m.top.numberOfViews > 0
+    m.log.info("there were views left on the stack after resetting ")
+    transitionToView(m.viewStack[m.top.numberOfViews - 1], animated)
+  end if
+
+
+end function
+
+function pop(animated = true as boolean, transition = invalid as mc.types.node)
+  previousView = getTopPanel()
+  m.log.method("pop ", m.top.numberOfViews, "previousView", mc.dv(previousView))
+  m.tempTransition = transition
+
+  nextView = invalid
+
+  if previousView <> invalid
+    m.top.poppedView = m.viewStack.pop()
+    previousView.navController = invalid
+
+    nextView = m.viewStack.Peek()
+    m.top.pushedView = nextView
+  end if
+
+  updatePublicFields()
+
+  m.top.shouldRemoveFromAggregateView = true
+  transitionToView(nextView, animated)
+
+  return previousView
+end function
+
+function getTopPanel()
+  return m.childContainer.getChild(m.top.numberOfViews - 1)
+end function
+
+function replace(newView = invalid as mc.types.node, animated = false as boolean, transition = invalid as mc.types.node) as object
+  'FIXME
+  'FIXME
+  'FIXME
+  'FIXME
+  'FIXME
+  m.log.method("replace ", m.top.numberOfViews)
+  previousView = getTopPanel()
+  m.tempTransition = transition
+
+  if previousView <> invalid
+    m.viewStack.Pop()
+    previousView.navController = invalid
+
+    'FIXME: this is a hack - we need to have an internal tracking for this field
+    m.top.numberOfViews--
+  end if
+
+  if newView <> invalid
+    m.log.info("replacing ", asString(previousView.id), " with ", asString(newView.id))
+    m.viewStack.Push(newView)
+    newView.navController = m.top
+  else
+    m.log.warn("replace invalid view passed in : ignoring")
+  end if
+
+  updatePublicFields()
+
+  transitionToReplacedView(previousView, newView, animated)
+
+  return previousView
+end function
+
+function transitionToReplacedView(previousView as mc.types.node, view as mc.types.node, animated = true as boolean)
+  m.log.info("Transitioning replacd view")
+
+  if m.tempTransition <> invalid
+    m.log.info("using temporary transition")
+    m.tempTransition@.execute(m.top, previousView, view, animated)
+    m.tempTransition = invalid
+  else
+    if m.top.transition = invalid
+      m.top.transition = createObject("roSGNode", "mv_SimpleTransition")
+    end if
+    'FIXME!!!!
+    previousView@._setShown(false)
+    m.childContainer.removeChild(previousView)
+    m.top.transition@.execute(m.top, previousView, view, false)
+
+  end if
+end function
+
+
+function onTransitionRemoveChild(child as mc.types.node) as void
+
+  'if this is an earlier panel, we will not remove it - we do that
+  childIndex = mc.collections.getArrayIndex(m.childContainer.getChildren(-1, 0), child)
+  m.log.info("Checking if we should remove child", child, "childindex is", childIndex, "count", m.childContainer.getChildCount())
+  if childIndex <> -1 and childIndex = m.childContainer.getChildCount()
+    m.log.info("removing child", mc.dv(child))
+
+    child@._setShown(false)
+    m.childContainer.removeChild(child)
+  end if
+end function
+
+function onTransitionAppendChild(child as mc.types.node) as void
+  if child = invalid
+    return
+  end if
+  lastChild = m.childContainer.getChild(m.childContainer.getChildCount() - 1)
+
+  if lastChild <> invalid
+    lastPos = lastChild.translation[0]
+    lastWidth = asInteger(lastChild.width, lastChild.boundingRect().width)
+  else
+    lastPos = 0
+    lastWidth = 0
+  end if
+  child.translation = [lastPos + m.top.leftMargin + lastWidth, 0]
+  child.depth = m.childContainer.getChildCount()
+  m.childContainer.appendChild(child)
+end function
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+'++ Private impl
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+function updatePublicFields()
+  m.top.numberOfViews = m.viewStack.count()
+  m.top.viewStack = m.viewStack
+
+  if m.top.numberOfViews = 0
+    m.top.isLastViewPopped = true
+  else
+    m.top.isLastViewPopped = false
+  end if
+end function
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+'++ Lifecycle methods
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+function initialize(args as mc.types.assocarray)
+  m.log.method("initialize(args)")
+  m.log = new log.Logger("NC.(" + m.top.getParent().subType() + ")")
+end function
+

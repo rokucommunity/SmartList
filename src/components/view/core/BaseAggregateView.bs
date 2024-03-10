@@ -1,0 +1,78 @@
+import "pkg:/source/core/Types-Polyfill.bs"
+
+function init() as void
+  m.currentView = invalid
+  m.isManagingVisibilityCallbacks = true
+end function
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+'++ view management
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+function hideView(view as mc.types.node)
+  if view <> invalid
+    if view.isSameNode(m.top.currentView)
+      m.top.currentView = invalid
+    end if
+    view@._setShown(false)
+    m.top.removeChild(view)
+  end if
+
+end function
+
+function transitionToView(view as mc.types.node, animated = true as boolean)
+  if m.tempTransition <> invalid
+    m.log.info("using temporary transition")
+    m.tempTransition@.execute(m.top, m.top.currentView, view, animated)
+    m.tempTransition = invalid
+  else
+    if m.top.transition = invalid
+      'bs:disable-next-line
+      m.top.transition = createObject("roSGNode", "mv_SimpleTransition")
+    end if
+    m.top.transition@.execute(m.top, m.top.currentView, view, animated)
+  end if
+end function
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+'++ Lifecycle methods
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+function onShow()
+  m.log.verbose("onShow", m.top.subType(), ".", m.top.id)
+  if m.top.currentView <> invalid
+    m.log.info("setting view visible: ", m.top.currentView.subType(), ".", m.top.currentView.id)
+    m.top.currentView@._setShown(true)
+  else
+    m.log.warn("this aggregate view has no currentView")
+  end if
+end function
+
+function onHide()
+  m.log.verbose("onHide", m.top.subType(), ".", m.top.id)
+  if m.top.currentView <> invalid
+    m.log.info("setting view invisible: ", m.top.currentView.subType(), ".", m.top.currentView.id)
+    m.top.currentView@._setShown(false)
+  else
+    m.log.warn("this aggregate view has no currentView")
+  end if
+end function
+
+function onGainedFocus(isSelfFocused as boolean)
+  ' m.log.verbose("onGainedFocus", isSelfFocused)
+
+  if isSelfFocused
+    if m.top.currentView <> invalid
+      if m.top.transition = invalid or m.top.transition.state <> "started"
+        m.log.debug("setting focus to CURRENT VIEW ")
+        mv.setFocus(m.top.currentView)
+      else
+        m.log.info("cannot set focus to child view while doing transition, setting focus to a placeholder")
+        mv.setFocus(m.top.findNode("focusTrap"))
+      end if
+    else
+      m.log.debug("no current view when gaining focus")
+    end if
+  end if
+end function
+

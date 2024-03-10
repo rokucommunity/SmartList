@@ -1,0 +1,52 @@
+import "pkg:/source/core/app/LaunchSequence.bs"
+
+namespace sl.core
+  @node("sl_LaunchSequence", "Group")
+  class LaunchSequence extends mc.app.LaunchSequence
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Public Fields
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    'can set this to false to cut out certain commands
+    public isIncludingView = true
+
+    protected styleUrl = "pkg:/meta/Styles.json"
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Private Fields
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    protected override function getCustomCommands() as mc.types.array
+      return [
+        new mc.SequentialCommand("Custom Steps", [
+          new mc.Command("Initialize IOC Container", m.initializeIOCContainer)
+        ])
+      ]
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ IOC
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    private function initializeIOCContainer(command as mc.Command)
+      m.log.info("initializing the SmartList IOC container")
+      m.setInstance("manifest", m.loadManifest())
+      m.setInstance("itemCache", m.createSGNode({
+        _type: "mc_Map"
+        id: "itemCache"
+      }))
+      m.finishCommand(command)
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Flyweight
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    protected override function prebakeViews()
+      m.componentPool@.prebakeComponents(30, "sl_BaseCell")
+      m.componentPool@.prebakeComponents(10, "mv_Label")
+    end function
+
+  end class
+end namespace

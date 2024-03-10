@@ -1,0 +1,82 @@
+import "pkg:/source/sl/collectionView/CollectionView.bs"
+
+namespace sl.collectionView
+  class ViewDecorationManager
+    enabled = true
+    private collectionView as sl.collectionView.CollectionView
+    private decoration as mc.types.node
+    private decorationOpenPercent as float = 1.0 ' Fully visible by default
+    private isHidden as boolean = false ' Track whether the decoration is hidden
+    private rowScrollPercent = 0.0
+
+    function new(collectionView as object)
+      m.collectionView = collectionView
+      m.decoration = m.collectionView.createSGNode("mv_Label", collectionView.top, "decoration", {
+        text: ""
+        vertAlign: "center"
+        horizAlign: "left"
+        size: [400, 50]
+        translation: [50, 0]
+        opacity: 0
+        font: "font:LargeBoldSystemFont"
+      })
+    end function
+
+    function render() as void
+      if m.enabled
+        m.isHidden = abs(m.collectionView.targetIndex - m.collectionView.currentIndex) > 1
+      end if
+    end function
+
+    ' Adjusts the yOffset for rows after the current row based on the scroll percentage
+    function getModifiedRowPosition(row as object, yOffset as integer) as integer
+      if not m.enabled
+        return yOffset
+      end if
+
+      currentRowIndex = m.collectionView.focusedRowIndex
+      direction = m.collectionView.direction
+      nextRowIndex = currentRowIndex + direction
+
+      if m.rowScrollPercent = 0
+        currentRowIndex = m.collectionView.focusedRowIndex
+      else
+        currentRowIndex = nextRowIndex
+      end if
+
+      m.updateDecorationOptionPercent(m.rowScrollPercent, direction)
+
+      if row.index > currentRowIndex
+        ' Calculate the additional offset based on the scroll percentage if the row is after the current row
+        additionalOffset = m.rowScrollPercent * 100 * m.decorationOpenPercent' Example: adjust by up to 100 pixels based on percentage
+        yOffset += additionalOffset
+      else if row.index = currentRowIndex
+        'place the bob there
+        decorationY = yOffset + row.height
+        m.decoration.translation = [m.decoration.translation[0], decorationY]
+      end if
+
+      return yOffset
+    end function
+
+    private function updateDecorationOptionPercent(rowScrollPercent as float, direction as integer) as void
+      ' Determine if we should adjust the openness of the decoration
+      if m.isHidden
+        if m.decorationOpenPercent > 0
+          ' ? " HIDING " m.collectionView.targetIndex " CI " m.collectionView.currentIndex " IS " m.isHidden
+          m.decorationOpenPercent -= m.rowScrollPercent
+          m.decorationOpenPercent = mc.max(m.decorationOpenPercent, 0) ' Ensure it doesn't go below 0
+        end if
+      else
+        if m.decorationOpenPercent < 1
+          ' ? " SHOWING " m.collectionView.targetIndex " CI " m.collectionView.currentIndex " IS " m.isHidden
+          m.decorationOpenPercent += m.rowScrollPercent
+          m.decorationOpenPercent = mc.min(m.decorationOpenPercent, 1) ' Ensure it doesn't exceed 1
+        end if
+      end if
+      m.decoration.opacity = m.decorationOpenPercent
+    end function
+
+  end class
+
+end namespace

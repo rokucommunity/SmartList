@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<component
+    name='mv_MiniKeyboard'
+    extends='DynamicMiniKeyboard'>
+  <interface>
+    <field
+        id='style'
+        type='assocarray'/>
+    <field
+        id='jumpToItem'
+        alwaysnotify='true'
+        type='integer'/>
+
+  </interface>
+</component>

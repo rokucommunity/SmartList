@@ -1,0 +1,78 @@
+' /**
+'  * @member initializeLogManager
+'  * @memberof module:LogMixin
+'  * @instance
+'  * @description creates Log manager, and places it on global
+'  *              expects to have access to globalNode on m.global (i.e. from within an SG control)
+'  * @param {transportTypes} array of transportsType names.
+'  *      you can provide your own transport;
+'  *      it just hast to be a node that implements the interface function:
+'  *
+'  *      function logItem(name, levelNum, text) as void
+'  *
+'  *      built in transports:
+'  *      LogNodeTransport - output goes straight to debug print
+'  *      LogScreenTransport - output is stored on
+'  *      LogPrintTransport - output goes to console
+'  *
+'  * @param {integer} logLevel
+'  *                level of the logging
+'  *                0 - ERROR
+'  *                1 - WARN
+'  *                2 - INFO and METHOD
+'  *                3 - VERBOSE
+'  *                4 - DEBUG
+'  * @returns {RLog} RLog instance for further configuration
+'  */
+namespace log
+function initializeLogManager(transportTypes = invalid, logLevel = invalid, includeDate = false, enabled = false) as object
+end function
+end namespace
+namespace log
+function global()
+end function
+end namespace
+namespace log
+function getLogInstance()
+end function
+end namespace
+namespace log
+class Logger
+    public enabled as boolean
+    private name as dynamic
+    private rLog as dynamic
+    private isFiltering as boolean
+    private logLevel as integer
+    private includeFilters as dynamic
+    private excludeFilters as dynamic
+    private includeDate as boolean
+    private logMode as integer
+    private transports as dynamic
+    function new(name = "general") as void
+    end function
+    function log(levelNum, level, message, value = "~#", value2 = "~#", value3 = "~#", value4 = "~#", value5 = "~#", value6 = "~#", value7 = "~#", value8 = "~#", value9 = "~#", isMethod = false) as void
+    end function
+    function increaseIndent(title = invalid) as void
+    end function
+    function decreaseIndent() as void
+    end function
+    function _changeIndent(delta as integer) as void
+    end function
+    function resetIndent() as void
+    end function
+    function debug(message, value = "~#", value2 = "~#", value3 = "~#", value4 = "~#", value5 = "~#", value6 = "~#", value7 = "~#", value8 = "~#", value9 = "~#") as void
+    end function
+    function verbose(message, value = "~#", value2 = "~#", value3 = "~#", value4 = "~#", value5 = "~#", value6 = "~#", value7 = "~#", value8 = "~#", value9 = "~#") as void
+    end function
+    function info(message, value = "~#", value2 = "~#", value3 = "~#", value4 = "~#", value5 = "~#", value6 = "~#", value7 = "~#", value8 = "~#", value9 = "~#") as void
+    end function
+    function method(message, value = "~#", value2 = "~#", value3 = "~#", value4 = "~#", value5 = "~#", value6 = "~#", value7 = "~#", value8 = "~#", value9 = "~#") as void
+    end function
+    function warn(message, value = "~#", value2 = "~#", value3 = "~#", value4 = "~#", value5 = "~#", value6 = "~#", value7 = "~#", value8 = "~#", value9 = "~#") as void
+    end function
+    function error(message, value = "~#", value2 = "~#", value3 = "~#", value4 = "~#", value5 = "~#", value6 = "~#", value7 = "~#", value8 = "~#", value9 = "~#") as void
+    end function
+    function toString(value as dynamic) as string
+    end function
+end class
+end namespace

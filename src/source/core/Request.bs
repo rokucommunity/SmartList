@@ -1,0 +1,296 @@
+import "pkg:/source/core/Utils.bs"
+import "pkg:/source/roku_modules/log/LogMixin.brs"
+import "pkg:/source/core/NetResult.bs"
+import "pkg:/source/core/QueryStringBuilder.bs"
+
+'adapted from https://github.com/bvisin/roku-requests
+
+namespace mc.net
+
+  class Request
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Private Fields
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    private log
+    private isLogAsCurlEnabled = mc.getGlobal().isRequestLoggingAsCurl = true
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Initialization
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    function new()
+      m.log = new log.Logger("Request")
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ public API
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    function get(url as string, params = invalid as mc.types.assocarray, headers = invalid as mc.types.assocarray, otherArgs = invalid as mc.types.assocarray) as mc.net.NetResult
+      return m.executeRequest("GET", url, params, headers, otherArgs)
+    end function
+
+    function post(url as string, params = invalid as mc.types.assocarray, headers = invalid as mc.types.assocarray, otherArgs = invalid as mc.types.assocarray) as mc.net.NetResult
+      return m.executeRequest("POST", url, params, headers, otherArgs)
+    end function
+
+    function delete(url as string, params = invalid as mc.types.assocarray, headers = invalid as mc.types.assocarray, otherArgs = invalid as mc.types.assocarray) as mc.net.NetResult
+      return m.executeRequest("DELETE", url, params, headers, otherArgs)
+    end function
+
+    function put(url as string, params = invalid as mc.types.assocarray, headers = invalid as mc.types.assocarray, otherArgs = invalid as mc.types.assocarray) as mc.net.NetResult
+      return m.executeRequest("PUT", url, params, headers, otherArgs)
+    end function
+
+    function formPost(url as string, params = invalid as mc.types.assocarray, headers = invalid as mc.types.assocarray, otherArgs = invalid as mc.types.assocarray) as mc.net.NetResult
+      if mc.isAACompatible(otherArgs) and mc.isAACompatible(params)
+        json = asAA(otherArgs.json)
+        json.append(params)
+        otherArgs.json = json
+      end if
+      return m.executeRequest("POST", url, params, headers, otherArgs)
+    end function
+
+    function executeRequest(method as string, url as string, params = invalid as mc.types.assocarray, headers = invalid as mc.types.assocarray, otherArgs = invalid as mc.types.assocarray) as mc.net.NetResult
+
+      if mc.isAACompatible(otherArgs)
+        args = otherArgs
+      else
+        args = {}
+      end if
+
+      if mc.isAACompatible(params)
+        args.params = params
+      else if params <> invalid
+        m.log.error("received illegal params type", type(params))
+      end if
+
+      if mc.isAACompatible(headers)
+        args.headers = headers
+      else if headers <> invalid
+        m.log.error("received illegal headers type", type(headers))
+      end if
+      result = new mc.net.NetResult(-1, invalid, invalid, headers)
+
+      try
+        result = m.runRequest(method, url, args)
+        m.log.info(`request for method ${method} with url ${url} and params ${params} was executed successfully`)
+      catch error
+        m.log.warn("there was an error while executing request for method", method, "with url", url, "and params", params, error)
+      end try
+      return result
+    end function
+
+    function logAsCurl(method as string, url as string, headers as mc.types.assocarray, data as string)
+      if m.isLogAsCurlEnabled
+        method = uCase(method)
+        headers = m.getHeadersAsCurl(headers)
+
+        curlString = `curl -X ${method} ${headers}`
+
+        if data <> invalid and data <> ""
+          curlString += `-d '${data}' ${url}`
+        else
+          curlString += `${url}`
+        end if
+
+        m.log.info(curlString)
+      end if
+    end function
+
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ private impl
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    ' /**
+    '  * @member runRequest
+    '  * @memberof module:Request
+    '  * @instance
+    '  * @function
+    '  * @description compiles the request parameters and args and runs the request, returning the response
+    '  * @param {string} method
+    '  * @param {string} url
+    '  * @param {assocarray} args - args for the request
+    '  * @returns {mc.net.NetResult} response object
+    '  */
+    private function runRequest(method as string, url as string, args as object) as mc.net.NetResult
+      headers = {}
+      params = {}
+      data = invalid
+      timeout = 30000
+      retryCount = 1
+      certificatePath = "common:/certs/ca-bundle.crt"
+
+      if mc.isAACompatible(args)
+        if mc.isAACompatible(args.params)
+          params = args.params
+        end if
+
+        if mc.isAACompatible(args.headers)
+          headers = args.headers
+        end if
+
+        if mc.isAACompatible(args.json) or mc.isArray(args.json)
+          headers["Content-Type"] = "application/json"
+          data = formatJson(args.json)
+        else if mc.isString(args.data)
+          data = args.data
+        end if
+
+        if mc.isInteger(args.timeout)
+          timeout = args.timeout
+        end if
+
+        if mc.isInteger(args.retryCount)
+          retryCount = args.retryCount
+        end if
+
+        if mc.isString(args.certificatePath)
+          certificatePath = args.certificatePath
+        end if
+      end if
+
+      queryStringBuilder = new mc.net.QueryStringBuilder(params)
+      url = queryStringBuilder.appendToUrl(url)
+
+      return m._execute(method, url, headers, data, timeout, retryCount, certificatePath)
+    end function
+
+    private function _execute(method as string, url as string, headers as mc.types.assocarray, data as string, timeout as float, retryCount as integer, certificatePath as string)
+      transfer = m.createUrlTransfer(true, true, certificatePath)
+      transfer.setUrl(url)
+      transfer.setHeaders(headers)
+
+      m.log.info("------ START HTTP REQUEST ------")
+      m.log.info("URL:", url)
+      m.log.info("Timeout= ", timeout)
+      m.log.info("Headers: ", headers)
+
+      m.logAsCurl(method, url, headers, data)
+      responseEvent = invalid
+      requestDetails = {
+        timesTried: 0
+
+      }
+
+      while retryCount > 0
+        retryCount = retryCount - 1
+        requestDetails.timesTried = requestDetails.timesTried + 1
+        m.log.info("Method: ", method)
+
+        responseEvent = m.sendTransfer(transfer, timeout, method, data)
+
+        if responseEvent <> invalid
+          responseCode = responseEvent.getResponseCode()
+          m.log.info("Response Code", responseCode)
+
+          if responseCode > 0 and responseCode < 400
+            exit while
+          else
+            m.log.warn("Bad response", responseCode)
+            m.log.warn("Will Retry ", retryCount)
+          end if
+
+        else
+          m.log.error("Event Timed Out")
+          transfer.asyncCancel()
+          timeout = timeout * 2
+          m.log.error("Timeout=", timeout)
+        end if
+      end while
+
+      m.log.info("------ END HTTP REQUEST ------")
+      return m.createNetResult(responseEvent)
+    end function
+
+    private function createUrlTransfer(enableEncodings as boolean, retainBodyOnError as boolean, certificatePath as string)
+      transfer = createObject("roUrlTransfer")
+      transfer.setPort(createObject("roMessagePort"))
+      transfer.enableEncodings(enableEncodings)
+      transfer.retainBodyOnError(retainBodyOnError)
+      if certificatePath <> ""
+        transfer.setCertificatesFile(certificatePath)
+        transfer.initClientCertificates()
+      end if
+      return transfer
+    end function
+
+    private function sendTransfer(transfer as object, timeout as integer, method as string, data = invalid as string) as object
+      sent = false
+
+      if data = invalid
+        data = ""
+      end if
+
+      if method = "POST"
+        sent = transfer.asyncPostFromString(data)
+      else if method = "GET"
+        sent = transfer.asyncGetToString()
+      else if method = "HEAD"
+        sent = transfer.asyncHead()
+      else
+        transfer.setRequest(method)
+        sent = transfer.asyncPostFromString(data)
+      end if
+
+      if sent
+        return m.waitForResponseEvent(timeout, transfer.getPort())
+      else
+        return invalid
+      end if
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ proxy wrappers for testing
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    private function waitForResponseEvent(timeout as integer, port as object) as object
+      event = wait(timeout, port)
+      if type(event) = "roUrlEvent"
+        return event
+      else
+        return invalid
+      end if
+    end function
+
+    private function createNetResult(responseEvent as object) as mc.net.NetResult
+      data = invalid
+      headers = invalid
+      statusCode = -1
+
+      contentType = ""
+
+      if responseEvent <> invalid
+        statusCode = responseEvent.getResponseCode()
+        'bs:disable-next-line
+        headers = responseEvent.getResponseHeaders()
+        contentType = mc.getPath(headers, "content-type", "")
+        data = responseEvent.getString()
+      end if
+
+      if lCase(contentType).instr("application/json") <> -1 and data <> invalid
+        data = parseJson(data)
+      end if
+
+      return new mc.net.NetResult(statusCode, data, invalid, headers)
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Private methods
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    private function getHeadersAsCurl(headers as mc.types.assocarray)
+      result = ""
+      if headers <> invalid and mc.isAACompatible(headers)
+        for each header in headers.items()
+          result = result + "-H" + "'" + header.key + ":" + header.value + "' " ' ${header.key}: ${header.value}'"
+        end for
+      end if
+      return result
+    end function
+
+  end class
+
+end namespace

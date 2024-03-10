@@ -1,0 +1,65 @@
+import "pkg:/source/tests/BaseTestSuite.spec.bs"
+import "pkg:/source/core/app/LaunchSequence.bs"
+namespace tests
+  @suite("LaunchSequence tests")
+  class LaunchSequenceTest extends tests.BaseTestSuite
+
+    private sequence
+    protected override function beforeEach()
+      super.beforeEach()
+
+      m.sequence = m.createNodeClass(mc.app.LaunchSequence)
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    @describe("constructor")
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    @it("initializes variables")
+    function _()
+      'bs:disable-next-line
+      sequence = m.createNodeClass(mc.app.LaunchSequence)
+      'TODO
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    @describe("createIOCInstance")
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    @it("creates the required node type and stores it in ioc")
+    function _()
+      args = { "id": "args" }
+      node = mc.createSGNode("Node")
+      globalNode = mc.createSGNode("Node")
+      m.sequence.global = globalNode
+
+      m.expectCalled(m.sequence.createSGNode("Node", invalid, "instanceId", args), node)
+
+      m.expectCalled(m.sequence.setInstance("instanceId", node))
+
+
+      instance = m.sequence.createIOCInstance("Node", "instanceId", args)
+      m.assertEqual(instance, node)
+      m.assertInvalid(globalNode.instanceId)
+
+    end function
+
+    @it("creates the required node type and stores it in ioc, and stores in global when copyToGlobal is set")
+    function _()
+      args = { "id": "args" }
+      node = mc.createSGNode("Node")
+      globalNode = mc.createSGNode("Node")
+      m.sequence.global = globalNode
+
+      m.expectCalled(m.sequence.createSGNode("Node", invalid, "instanceId", args), node)
+
+      m.expectCalled(m.sequence.setInstance("instanceId", node))
+
+      m.sequence.createIOCInstance("Node", "instanceId", args, true)
+
+      m.assertEqual(globalNode.instanceId, node)
+    end function
+
+
+  end class
+end namespace

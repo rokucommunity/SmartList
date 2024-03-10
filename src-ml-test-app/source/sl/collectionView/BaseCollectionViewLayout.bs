@@ -1,0 +1,310 @@
+import "pkg:/source/sl/collectionView/CollectionView.bs"
+import "pkg:/source/sl/collectionView/CollectionViewAPI.bs"
+import "pkg:/source/sl/collectionView/BaseCollectionViewRow.bs"
+
+namespace sl.collectionView
+  class BaseCollectionViewLayout extends mc.BaseClass
+    enabled = true
+    row as sl.collectionView.BaseCollectionViewRow
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Public Fields
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    numberOfItems = 0
+    virtualPosition = 0
+    rowSettings as sl.collectionView.RowSettings
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Protected Fields
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    protected layout as sl.collectionView.BaseCollectionViewLayout
+    protected componentPool as mc.types.node
+    protected renderedCells = []
+    protected cellsById = {}
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Initialization
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    function new(row as sl.collectionView.BaseCollectionViewRow, loggerName = "BaseCollectionViewLayout" as string)
+      super(loggerName)
+      m.row = row
+      if row.content <> invalid
+        m.numberOfItems = row.content.getChildCount()
+      end if
+      m.componentPool = m.row.collectionView.componentPool
+      m.rowSettings = m.row.rowSettings
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Public Methods
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    function getFocusInfo(index as integer)
+      if index = -1
+        index = m.row.focusedIndex
+      else if index < 0
+        index = 0
+      else if index >= m.numberOfItems
+        index = m.numberOfItems - 1
+      end if
+
+      info = new sl.collectionView.FocusInfo(m.row.index, index, m.rowSettings.gridOffset, m.rowSettings.cellSize)
+      info.insets = m.rowSettings.insets ?? [0, 0, 0, 0]
+      return info
+    end function
+
+    function getRenderedCellAtVirtualPosition(virtualPosition as integer)
+      return m.getRenderedCell(m.getCellIndexAtVirtualPosition(virtualPosition))
+    end function
+
+    function getCellIndexAtVirtualPosition(virtualPosition as integer)
+      return Int(virtualPosition / (m.rowSettings.cellSize[0] + m.rowSettings.padding))
+    end function
+
+    function getVirutalPositionForIndex(index as integer)
+      return index * (m.rowSettings.cellSize[0] + m.rowSettings.padding)
+    end function
+
+    function onEnterScreen()
+      m.getCellsForVisibleItems()
+    end function
+
+    function onExitScreen()
+      for each cell in m.renderedCells
+        cell@.setContent(invalid, invalid)
+      end for
+      m.componentPool@.releaseComponents(m.renderedCells, "hide")
+      m.renderedCells = []
+      m.cellsById = {}
+      m.row.isOnScreen = false
+    end function
+
+    function onContentChange(event as sl.collectionView.ContentChangeEvent)
+      state = event.content.state
+      m.numberOfItems = event.content.getChildCount()
+      m.log.info("Row handling content change event with", state)
+
+      if m.row.isOnScreen
+        'crude for now, in future this will
+        ' update event.result to indicate if the layout/size is invalid
+        ' setup some state fields for working out how the subsquent render calls that do the animation will play out
+        ' potentially invalidate any focus, too
+        if state = sl.common.State.loaded
+          if m.numberOfItems = 0
+            m.renderAsHiddenRow(event)
+          else
+            m.convertPlaceholderCells()
+          end if
+        else if state = sl.common.State.error
+          m.renderAsHiddenRow(event)
+        end if
+      end if
+    end function
+
+    function getItemIndexForKeyPress(key as sl.common.KeyPress, isLongPress as boolean)
+      index = m.row.focusedIndex
+      if key = sl.common.KeyPress.left
+        if isLongPress
+          return 0
+        else
+          return mc.clamp(index - 1, 0, m.numberOfItems - 1)
+        end if
+      else if key = sl.common.KeyPress.right
+        if isLongPress
+          return m.numberOfItems - 1
+        else
+          return mc.clamp(index + 1, 0, m.numberOfItems - 1)
+        end if
+      else
+        return -1
+      end if
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Protected Methods
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    protected function configureSettings(content as mc.types.node)
+      m.row.height = asInteger(content.rowHeight, 400)
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Cell Creation And Management
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    private function getRenderedCell(index as integer)
+      return m.cellsById[index.toStr()]
+    end function
+
+    private function getCell(index as integer)
+      cell = m.cellsById[index.toStr()]
+      if cell <> invalid
+        ' m.log.info("Using cached cell for index", index)
+        return cell
+      end if
+      ' m.log.info("Need to create a cell for index", index)
+      cell = m.componentPool@.getComponent("sl_BaseCell")
+      cell.visible = true
+      cell.index = index
+      m.cellsById[index.toStr()] = cell
+      m.row.container.appendChild(cell)
+      return cell
+    end function
+
+
+    'INVESTINGATE INTERPLAY OF THIS...
+    'I THINK I DO NOT NEED IT.. CAN MERELY HAVE X ITEMS AS FAKE ONES WHILE WE LOAD
+    private function getCellsForVisibleItems() as void
+      ? m.row.content.title " getCellsForVisibleItems "
+      if m.row.state = sl.collectionView.RowState.loading
+        m.showPlaceHolders()
+      else
+        'TODO - only load what's in the viewport, by default.. probably want to have a call to our general purpose rendereWHileScrolling here.
+        content = m.row.content
+        for i = m.row.focusedIndex to mc.clamp(0, m.row.focusedIndex + m.rowSettings.numCols, content.getChildCount()) - 1
+          ' ? " GETTING VISIBLE CELL numCols " m.rowSettings.numCols
+          cell = m.configureCell(i, content.getChild(i))
+          m.renderedCells.push(cell)
+        end for
+      end if
+    end function
+
+    private function configureCell(index as integer, item as mc.types.node)
+      cell = m.getCell(index)
+      ' if cell.index <> index
+      '   'we need to reuse this
+      '   cell.index = index
+      '   ' ? " SETTING CONTENT ON item " i
+      '   cell.visible = true
+      ' end if
+
+      cell@.setContent(item, m.row.content)
+      cell.visible = true
+      return cell
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Placeholder Support
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    private function renderAsHiddenRow(event as sl.collectionView.ContentChangeEvent)
+      'TODO - support for hidden rows is wip
+      ' m.row.height = 0
+      m.row.isFocusable = false
+      ' m.row.isHidden = true
+      m.onExitScreen()
+      event.result = sl.collectionView.ChangeResult.layoutInvalidated
+      ' event.result = sl.collectionView.ChangeResult.sizeInvalidated
+    end function
+
+    private function convertPlaceholderCells()
+      'crude for now - we already have the cells, let's just set content on them
+      'HACK for now - we were not gettig enough cells
+      m.getCellsForVisibleItems()
+      ' ? "row " m.row.index " is converting placeholders"
+      ' content = m.row.content
+      ' for i = 0 to m.renderedCells.count() - 1
+      '   item = content.getChild(i)
+      '   cell = m.renderedCells[i]
+      '   ' ? " SETTING CONTENT ON item " i " CS " m.rowSettings.cellSize " C " m.content
+      '   cell@.setContent(item, content)
+      '   cell.visible = true
+      ' end for
+    end function
+
+    private function showPlaceholders()
+      ? "row " m.row.index " is not loaded: using placeholders"
+      for i = 0 to m.rowSettings.numCols - 1
+        cell = m.getCell(m.row.collectionView.dummyContent, i)
+        cell.index = i
+        ' ? " SETTING CONTENT ON item " i
+        cell@.setContent(m.row.collectionView.dummyContent, m.row.content)
+        cell.visible = true
+        m.renderedCells.push(cell)
+        m.cellsById[i.toStr()] = cell
+      end for
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Rendering
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    function render(event as sl.collectionView.RenderEvent)
+
+      y = event.position
+      if event.virtualX <> invalid
+        virtualX = event.virtualX
+        m.virtualPosition = virtualX
+      else
+        virtualX = m.virtualPosition
+      end if
+
+      ' m.log.info("Rendering", m.row.index, m.row.content.title, virtualX, y)
+
+      margin = m.rowSettings.margin
+      itemWidth = (m.rowSettings.cellSize[0] + m.rowSettings.padding)
+
+      for each cell in m.renderedCells
+
+        x = (cell.index * itemWidth) - virtualX
+        ' m.log.info("Rendering", cell.index, "at", x)
+        cell.translation = [x, y + margin]
+        cell.visible = true
+      end for
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Calculating Visible Cells
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    @optimize
+    function calculateVisibleCells(virtualPosition as integer) as void
+      ' Calculate visible cell indices based on virtualPosition
+      firstVisibleCellIndex = m.getCellIndexAtVirtualPosition(virtualPosition)
+      lastVisibleCellIndex = m.getCellIndexAtVirtualPosition(virtualPosition + m.row.viewportWidth) 'maybe -1 here?
+      lastVisibleCellIndex = mc.clamp(mc.min(lastVisibleCellIndex, firstVisibleCellIndex + m.rowSettings.numCols - 1), 0, m.numberOfItems)
+      cellsToRemoveById = {}
+      cellsToRemoveById.append(m.cellsById)
+
+      renderedCells = []
+      'TODO we could be more efficient here, releasing before creating; but I doubt it's worth the performance hit
+
+      ' ? " CALCUALTING VIS CELLS " m.virtualPosition " C-spin " m.content.title " firstVisibleCellIndex " firstVisibleCellIndex " lastVisibleCellIndex " lastVisibleCellIndex " cbid.count " cellsToRemoveById.count() " RCC " m.renderedCells.count()
+
+      content = m.row.content
+      for i = firstVisibleCellIndex to lastVisibleCellIndex
+        ' Determine if the cell should be visible based on its index
+        cell = m.configureCell(i, content.getChild(i))
+        cell.visible = true
+        cellsToRemoveById.delete(i.toStr())
+        renderedCells.push(cell)
+      end for
+      m.renderedCells = renderedCells
+
+      'remove unused cells
+      'TODO - debounce this
+      cellsToRemove = []
+      ' ? " cellsToRemoveById " cellsToRemoveById.count() " " cellsToRemoveById.keys()
+      if cellsToRemoveById.count() > 0
+        ' ? "got values to delete"
+        for each key in cellsToRemoveById.keys()
+          if cellsToRemoveById[key] <> invalid
+            m.cellsById.delete(key)
+            cellsToRemove.push(cellsToRemoveById[key])
+          end if
+        end for
+
+        if cellsToRemove.count() > 0
+          ' ? " REMOVING CELLS"
+          m.componentPool@.releaseComponents(cellsToRemove, "hide")
+        end if
+      end if
+    end function
+
+
+  end class
+
+end namespace

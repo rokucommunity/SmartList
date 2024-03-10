@@ -1,0 +1,54 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<component
+    name='mv_PanelController'
+    extends='mv_BaseAggregateView'>
+
+  <interface>
+    <field
+        id='numberOfViews'
+        type='integer'
+        alwaysNotify='true' />
+
+    <field
+        id='viewStack'
+        type='array' />
+
+    <field
+        id='poppedView'
+        type='node' />
+
+    <field
+        id='pushedView'
+        type='node' />
+
+    <field
+        id='activeIndex'
+        type='integer' />
+    <field
+        id='leftMargin'
+        type='integer'
+        value='100' />
+
+    <!-- events  -->
+    <field
+        id='isLastViewPopped'
+        type='boolean'
+        alwaysNotify='true' />
+
+
+    <!-- public functions -->
+    <function name='push' />
+    <function name='pop' />
+    <function name='replace' />
+    <function name='reset' />
+    <function name='onTransitionAppendChild' />
+    <function name='onTransitionRemoveChild' />
+  </interface>
+
+  <children>
+    <Group id='container'>
+      <Group id='childContainer' />
+    </Group>
+  </children>
+
+</component>

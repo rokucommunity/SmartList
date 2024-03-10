@@ -1,0 +1,311 @@
+import "pkg:/source/roku_modules/log/LogMixin.brs"
+import "pkg:/source/core/Utils.bs"
+import "pkg:/components/view/mixin/FocusMixin.bs"
+import "pkg:/components/view/mixin/KeyMixin.bs"
+import "pkg:/source/core/Utils.bs"
+import "pkg:/source/view/ViewUtils.bs"
+import "pkg:/source/core/MIOC.bs"
+import "pkg:/source/core/Types-Polyfill.bs"
+
+' /**
+'  * @module BaseView
+'  * @description BaseView class for all controls or screens
+'  */
+function init() as void
+  m.log = new log.Logger(getViewName())
+  m.isManagingVisibilityCallbacks = true
+  mioc.initialize()
+  m.top.observeFieldScoped("isFocused", "onIsFocusedChange")
+  m.top.observeFieldScoped("isChildFocused", "onIsChildFocusedChange")
+
+  keyPressMixinInit()
+
+  'TODO - guard these observers to not include in prod builds
+  m.top.observeFieldScoped("__debugM", "onDebugMChange")
+
+  m.wasShown = false
+  m.isInAggregateView = false
+end function
+
+function getViewName()
+  return m.top.subType()
+end function
+
+function onDebugMChange()
+  mc.setOrAddNodeField(m.top, "__m", mc.private.getDebugMObject(m))
+  if m.vm <> invalid
+    mc.setOrAddNodeField(m.top, "__vm", mc.private.getDebugMObject(m.vm))
+  end if
+end function
+
+' /**
+'  * @member initializeView
+'  * @memberof module:BaseView
+'  * @instance
+'  * @function
+'  * @description initializes the passed in View
+'  * @param {BaseView} the view to initialize
+'  */
+function initializeView(view as mc.types.node, args = invalid as mc.types.assocarray) as void
+  if view <> invalid
+    view@._initialize(args)
+  else
+    m.log.error("view is invalid!")
+  end if
+end function
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+'** VISIBILITY
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+function onVisibleChange()
+  'TODO - does the nav controller handle this in future?
+  visible = m.top.visible
+  m.log.info(m.top.id, "onVisibleChange visible ", visible)
+  isShown = m.top.isShown
+  if visible and not isShown
+    _onShow(invalid)
+  else if not visible and isShown
+    _onHide(invalid)
+  end if
+end function
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+'++ Lifecycle methods
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+function _onShow(args as mc.types.assocarray) as void
+  ' ? ">> base VIEW _OnShow " ; m.top.id ; " isShown " ; m.top.isShown
+  oldIsShowing = m.top.isShown
+  if not m.top.isInitialized
+    return
+  end if
+  m.top.isShown = true
+
+  if not m.wasShown
+    'bs:disable-next-line
+    if mc.isFunction(onFirstShow)
+      'bs:disable-next-line
+      onFirstShow()
+    end if
+    m.wasShown = true
+
+    if m.vm <> invalid and m.vm.onFirstShow <> invalid
+      m.vm.onFirstShow()
+    else if m.onFirstShow <> invalid
+      m.onFirstShow()
+    end if
+
+  end if
+
+  if oldIsShowing <> m.top.isShown
+    'bs:disable-next-line
+    if mc.isFunction(onShow)
+      'bs:disable-next-line
+      onShow()
+    end if
+
+    if m.vm <> invalid and m.vm.onShow <> invalid
+      m.vm.onShow()
+    else if m.onShow <> invalid
+      m.onShow()
+    end if
+
+  end if
+end function
+
+function _onHide(args as mc.types.assocarray)
+  if m.wasShown
+    m.top.isShown = false
+    'bs:disable-next-line
+    if mc.isFunction(onHide)
+      'bs:disable-next-line
+      onHide()
+    end if
+
+    if m.vm <> invalid and m.vm.onHide <> invalid
+      m.vm.onHide()
+    end if
+    if m.onHide <> invalid
+      m.onHide()
+    end if
+
+  else
+    m.log.warn("onHide called before show: ignoring")
+  end if
+end function
+
+function _initialize(args = invalid as mc.types.assocarray)
+  if not m.top.isInitialized
+    m.top.isInitialized = true
+    initialize(args)
+    if m._initialize <> invalid
+      m._initialize()
+    end if
+    'bs:disable-next-line
+    if m.pendingCallbacks <> invalid and m.pendingCallbacks.count() > 0 and mc.isFunction(executePendingCallbacks)
+      'bs:disable-next-line
+      executePendingCallbacks()
+    end if
+    'bs:disable-next-line
+    if mc.isFunction(m_createVM)
+      'bs:disable-next-line
+      m_createVM()
+    end if
+
+    _observeVisibilityIfRequired()
+  else
+    m.log.warn("View was already initialized. Ignoring subsequent call ", m.top)
+  end if
+end function
+
+function _observeVisibilityIfRequired()
+  if m.isManagingVisibilityCallbacks
+    m.top.observeFieldScoped("visible", "onVisibleChange")
+
+    if m.top.visible and not m.top.isShown
+      _onShow(invalid)
+    end if
+  else
+    m.top.unobserveFieldScoped("visible")
+  end if
+end function
+
+function onAddedToAggregateView(view as mc.types.node)
+  if not m.isInAggregateView
+    m.isInAggregateView = true
+    _observeVisibilityIfRequired()
+    if m.vm <> invalid and m.vm.onAddedToAggregateView <> invalid
+      m.vm.onAddedToAggregateView(view)
+    else if m.onAddedToAggregateView <> invalid
+      m.onAddedToAggregateView(view)
+    end if
+  end if
+end function
+
+function onRemovedFromAggregateView(view as mc.types.node)
+  if m.isInAggregateView
+    m.isInAggregateView = false
+
+    _observeVisibilityIfRequired()
+    if m.vm <> invalid and m.vm.onRemovedFromAggregateView <> invalid
+      m.vm.onRemovedFromAggregateView(view)
+    else if m.onRemovedFromAggregateView <> invalid
+      m.onRemovedFromAggregateView(view)
+    end if
+  end if
+end function
+
+function _setShown(visible as boolean)
+  m.top.visible = visible
+  onVisibleChange()
+end function
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+'++ focus
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+function onIsFocusedChange()
+  if asBoolean(m.global.focusManager.isLogging)
+    m.log.verbose("m.top.isFocused", m.top.isFocused, mc.dv(m.top))
+  end if
+
+  if m.top.isFocused
+    onGainedFocus(true)
+  else
+    onLostFocus()
+  end if
+end function
+
+function onIsChildFocusedChange()
+  if m.global.focusManager.isLogging
+    m.log.verbose("m.top.isChildFocused", m.top.isChildFocused, mc.dv(m.top))
+  end if
+
+  if m.top.isChildFocused
+    onGainedFocus(false)
+  else
+    'we don't notify about this
+    onChildLostFocus()
+  end if
+end function
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+'++ abstract focus methods
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+' /**
+'  * @member onGainedFocus
+'  * @memberof module:FocusMixin
+'  * @instance
+'  * @function
+'  * @description invoked when a control, or a parent of a focused control, gains focus
+'  * @param {boolean} isSelfFocused - if true, then this is the control that is focused, if false, then it is one of the control's parents
+'  */
+function onGainedFocus(isSelfFocused as boolean)
+  if asBoolean(m.global.focusManager.isLogging)
+    m.log.info("onGainedFocus", m.top.subType(), isSelfFocused)
+  end if
+
+  if m.vm <> invalid
+    if m.vm.onGainedFocus <> invalid
+      m.vm.onGainedFocus(isSelfFocused)
+    end if
+
+    'bs:disable-next-line
+    if mc.isFunction(mx_onFocusIdChange)
+      'bs:disable-next-line
+      mx_onFocusIdChange(m.vm.focusId)
+    end if
+  else if m.onGainedFocus <> invalid
+    m.onGainedFocus(isSelfFocused)
+  end if
+end function
+
+' /**
+'  * @member onGainedFocus
+'  * @memberof module:FocusMixin
+'  * @instance
+'  * @function
+'  * @description invoked when a control, loses focus
+'  */
+function onLostFocus()
+  if m.global.focusManager.isLogging
+    m.log.info("lost focus:", m.top.subType(), ".", m.top.id)
+  end if
+  if m.vm <> invalid and m.vm.onLostFocus <> invalid
+    m.vm.onLostFocus()
+  else if m.onLostFocus <> invalid
+    m.onLostFocus()
+  end if
+end function
+
+function onChildLostFocus()
+  if m.global.focusManager.isLogging
+    m.log.info("child lost focus:", m.top.subType(), ".", m.top.id)
+  end if
+  if m.vm <> invalid and m.vm.onChildLostFocus <> invalid
+    m.vm.onChildLostFocus()
+  else if m.onChildLostFocus <> invalid
+    m.onChildLostFocus()
+  end if
+end function
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+'++ utils
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+function callVMFunc(funcName as string, p1 = "#M_NONE#" as dynamic, p2 = "#M_NONE#" as dynamic, p3 = "#M_NONE#" as dynamic)
+  if m.vm <> invalid
+    return mc.callAAFunc(m.vm, funcName, p1, p2, p3)
+  else
+    return mc.callAAFunc(m, funcName, p1, p2, p3)
+  end if
+end function
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+'++ abstract lifecycle methods
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+function initialize(args as mc.types.assocarray)
+end function

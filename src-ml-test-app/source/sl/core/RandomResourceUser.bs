@@ -1,0 +1,168 @@
+import "pkg:/source/view/BaseView.bs"
+
+namespace sl
+  @node("RandomResourceUser", "mv_BaseView")
+  class RandomResourceUser extends mv.BaseView
+
+    private sprite as mc.types.node
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Private Fields
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    private lyrics = [
+      "Help, I need somebody"
+      "Hey Jude, don't make it bad"
+      "Yesterday, all my troubles seemed so far away"
+      "Here comes the sun, and I say"
+      "Let it be, let it be, let it be, let it be"
+      "All you need is love"
+      "I am the walrus, goo goo g'joob"
+      "Lucy in the sky with diamonds"
+      "While my guitar gently weeps"
+      "Something in the way she moves"
+      "And in the end, the love you take is equal to the love you make"
+      "Blackbird singing in the dead of night"
+      "We all live in a yellow submarine"
+      "You may say I'm a dreamer, but I'm not the only one"
+      "I get by with a little help from my friends"
+      "Can't buy me love, love"
+      "I want to hold your hand"
+      "She loves you, yeah, yeah, yeah"
+      "It's been a hard day's night, and I've been working like a dog"
+      "Twist and shout"
+      "Come together, right now, over me"
+      "Penny Lane is in my ears and in my eyes"
+      "Strawberry Fields forever"
+      "A day in the life"
+      "The long and winding road"
+      "We can work it out"
+      "I've just seen a face I can't forget the time or place"
+      "Hello, goodbye"
+      "Got to get you into my life"
+      "Ticket to ride"
+      "Eight days a week"
+      "Norwegian Wood (This Bird Has Flown)"
+      "Drive my car"
+      "In my life, I love you more"
+      "With a little help from my friends"
+      "Yellow submarine, yellow submarine"
+      "Eleanor Rigby picks up the rice in the church where a wedding has been"
+      "I'm looking through you"
+      "Revolution, well, you know"
+      "Across the universe"
+      "Lady Madonna, children at your feet"
+      "The fool on the hill"
+      "I feel fine"
+      "She's leaving home"
+      "Magical mystery tour is waiting to take you away"
+      "Back in the U.S.S.R."
+      "Ob-la-di, ob-la-da, life goes on, bra"
+      "You've got to hide your love away"
+      "I'm a loser"
+      "A hard day's night"
+      "Ticket to ride"
+      "No reply"
+      "I'll follow the sun"
+      "Wait"
+      "Act naturally"
+      "Because the world is round, it turns me on"
+      "You're going to lose that girl"
+      "I need you"
+      "Another girl"
+      "You like me too much"
+      "Tell me what you see"
+      "I've got a feeling"
+      "One after 909"
+      "The ballad of John and Yoko"
+      "Oh! Darling"
+      "Octopus's garden"
+      "I want you (she's so heavy)"
+      "Here, there and everywhere"
+      "Nowhere man"
+      "Michelle, ma belle"
+      "Girl"
+      "In the town where I was born"
+      "For no one"
+      "The word"
+      "And I love her"
+      "It won't be long"
+      "All I've got to do"
+      "All my loving"
+      "Don't bother me"
+      "Little child"
+      "Till there was you"
+      "Please Mister Postman"
+      "Roll over Beethoven"
+      "Hold me tight"
+      "You really got a hold on me"
+      "I wanna be your man"
+      "Devil in her heart"
+      "Not a second time"
+      "Money (That's what I want)"
+      "You can't do that"
+      "I should have known better"
+      "If I fell"
+      "I'm happy just to dance with you"
+      "And I love her"
+      "Tell me why"
+      "Can't buy me love"
+      "Any time at all"
+      "I'll cry instead"
+      "Things we said today"
+      "When I get home"
+      "You can't do that"
+      "I'll be back"
+      "Baby's in black"
+      "Rock and roll music"
+      "I'll follow the sun"
+      "Mr. Moonlight"
+      "Kansas City/Hey-Hey-Hey-Hey!"
+      "Eight days a week"
+      "Words of love"
+      "Honey don't"
+      "Every little thing"
+      "I don't want to spoil the party"
+      "What you're doing"
+      "Everybody's trying to be my baby"
+    ]
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Initialize
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    function new()
+      super("RandomResourceUser")
+    end function
+
+    protected override function initialize()
+      super.initialize()
+      m.log.info("initializine menu screen")
+      m.createViews()
+      m.setInterval(m.logSomeRandomText, 0.2)
+    end function
+
+    private function createViews()
+      m.sprite = m.top.createChild("AnimatedPoster")
+      m.sprite.width = 100
+      m.sprite.height = 89
+      m.sprite.spriteSheetUri = "pkg:/images/tiles/guitar-sheet-$$RES$$.png"
+
+      m.sprite.frameOffsets = [
+        [0, 0]
+        [101, 0]
+        [202, 0]
+        [0, 90]
+        [101, 90]
+        [202, 90]
+      ]
+      m.sprite.duration = 0.15
+      m.sprite.control = "start"
+    end function
+
+    private function logSomeRandomText()
+      m.log.info("I am thinking about:", m.lyrics[rnd(m.lyrics.count() - 1)])
+    end function
+
+  end class
+end namespace

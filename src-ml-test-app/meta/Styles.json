@@ -1,0 +1,238 @@
+{
+  "version": "0.0.1",
+  "colors": {
+    "background": {
+      "normal": "#000000",
+      "light": "#aaaaaa",
+      "dark": "#111111",
+      "red": "#AC4731",
+      "darkPurple": "#662D91"
+    },
+    "general": {
+      "red": "#ff0000",
+      "ligh-red": "#aa0000",
+      "blue": "#0000ff",
+      "light-blue": "#0000aa",
+      "black": "#000000",
+      "dark": "#555555",
+      "white": "#ffffff",
+      "green": "#00ff00",
+      "grey": "#aaaaaa"
+    }
+  },
+  "fonts": {
+    "title-00": "mediumBold,14",
+    "title-01": "mediumBold,16",
+    "title-02": "mediumBold,20",
+    "title-03": "mediumBold,24",
+    "title-04": "mediumBold,28",
+    "title-05": "mediumBold,32",
+    "title-06": "mediumBold,40",
+    "caption": "medium,12",
+    "body-00": "medium,14",
+    "body-01": "medium,16",
+    "body-02": "medium,20",
+    "body-03": "medium,24",
+    "body-04": "medium,27",
+    "body-05": "medium,32",
+    "body-06": "medium,40"
+  },
+  "controls": {
+    "icons": {
+      "small-circle": {
+        "normal": {
+          "blendColor": "#4A0E9C",
+          "size": [38, 38],
+          "translation": [5, 0],
+          "uri": "pkg:/images/home/circle-icon.png"
+        },
+        "focused": {
+          "blendColor": "#ffffff"
+        }
+      }
+    },
+    "Button": {
+      "menu": {
+        "size": [0, 0],
+        "textOffset": [-1, -1],
+        "iconOffset": [26, -1],
+        "normal": {
+          "label": {
+            "fontKey": "Medium,32",
+            "color": "#ffffff",
+            "translation": [96, 0],
+            "size": [0, 80],
+            "horizAlign": "left",
+            "vertAlign": "center"
+          },
+          "backgroundPoster": {
+            "visible": false
+          },
+          "iconPoster": {
+            "blendColor": "#ffffff",
+            "size": [0, 0],
+            "translation": [0, 0]
+          }
+        },
+        "focused": {
+          "label": {
+            "fontKey": "MediumBold,32",
+            "color": "#000000",
+            "translation": [30, 0],
+            "size": [0, 80],
+            "horizAlign": "left",
+            "vertAlign": "center"
+          },
+          "backgroundPoster": {
+            "uri": "pkg:/images/backgrounds/background-round-solid-fhd.9.png",
+            "blendColor": "#ffffff",
+            "visible": true,
+            "size": [0, 0],
+            "translation": [0, 0]
+          },
+          "iconPoster": {
+            "blendColor": "#ffffff"
+          }
+        },
+        "disabled": {
+          "label": {
+            "fontKey": "Medium,32",
+            "color": "#cccccc",
+            "translation": [30, 0],
+            "size": [0, 80],
+            "horizAlign": "center",
+            "vertAlign": "center"
+          },
+          "subtextLabel": {
+            "fontKey": "Medium,20",
+            "color": "#cccccc",
+            "translation": [30, 40],
+            "size": [0, 20],
+            "vertAlign": "top",
+            "horizAlign": "center"
+          },
+          "backgroundPoster": {
+            "uri": "pkg:/images/backgrounds/background-round-solid-fhd.9.png",
+            "blendColor": "#666666",
+            "size": [0, 0],
+            "translation": [0, 0]
+          },
+          "iconPoster": {
+            "blendColor": "#aaaaaa"
+          }
+        },
+        "selected": {
+          "label": {
+            "fontKey": "Medium,32",
+            "color": "#000000",
+            "translation": [30, 10],
+            "size": [0, 80],
+            "horizAlign": "left",
+            "vertAlign": "center"
+          },
+          "backgroundPoster": {
+            "uri": "pkg:/images/backgrounds/background-round-solid-fhd.9.png",
+            "blendColor": "#ffffff",
+            "size": [0, 0],
+            "translation": [0, 0],
+            "visible": true
+          },
+          "iconPoster": {
+            "blendColor": "#ffffff"
+          }
+        }
+      },
+      "main-menu": {
+        "size": [524, 71],
+        "textOffset": [90, -1],
+        "iconOffset": [-1, -1],
+        "normal": {
+          "label": {
+            "fontKey": "Medium,32",
+            "color": "#ffffff",
+            "translation": [30, 0],
+            "size": [0, 71],
+            "horizAlign": "left",
+            "vertAlign": "center"
+          },
+          "backgroundPoster": {
+            "visible": false
+          },
+          "iconPoster": {
+            "blendColor": "#4A0E9C",
+            "uri": "pkg:/images/home/circle-icon.png",
+            "size": [38, 38],
+            "translation": [22, 22]
+          }
+        },
+        "focused": {
+          "label": {
+            "fontKey": "MediumBold,32",
+            "color": "#ffffff",
+            "translation": [30, 0],
+            "size": [0, 71],
+            "horizAlign": "left",
+            "vertAlign": "center"
+          },
+          "backgroundPoster": {
+            "uri": "pkg:/images/input-focusrect.9.png",
+            "blendColor": "#ffffff",
+            "visible": true,
+            "size": [0, 0],
+            "translation": [0, 0]
+          },
+          "iconPoster": {
+            "blendColor": "#ffffff"
+          }
+        },
+        "disabled": {
+          "label": {
+            "fontKey": "Medium,32",
+            "color": "#cccccc",
+            "translation": [30, 0],
+            "size": [0, 71],
+            "horizAlign": "center",
+            "vertAlign": "center"
+          },
+          "subtextLabel": {
+            "fontKey": "Medium,20",
+            "color": "#cccccc",
+            "translation": [30, 40],
+            "size": [0, 20],
+            "vertAlign": "top",
+            "horizAlign": "center"
+          },
+          "backgroundPoster": {
+            "uri": "pkg:/images/input-focusrect.9.png",
+            "blendColor": "#666666",
+            "size": [0, 0],
+            "translation": [0, 0]
+          },
+          "iconPoster": {
+            "blendColor": "#aaaaaa"
+          }
+        },
+        "selected": {
+          "label": {
+            "fontKey": "MediumBold,32",
+            "color": "#ffffff",
+            "translation": [30, 10],
+            "size": [0, 71],
+            "horizAlign": "left",
+            "vertAlign": "center"
+          },
+          "backgroundPoster": {
+            "uri": "pkg:/images/input-focusrect.9.png",
+            "blendColor": "#ffffff",
+            "size": [0, 0],
+            "translation": [0, 0],
+            "visible": true
+          },
+          "iconPoster": {
+            "blendColor": "#ffffff"
+          }
+        }
+      }
+    }
+  }
+}

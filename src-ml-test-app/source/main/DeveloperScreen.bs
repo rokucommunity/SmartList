@@ -1,0 +1,39 @@
+import "pkg:/source/view/debug/DeveloperScreen.bs"
+import "pkg:/source/core/DebugTimer.bs"
+namespace main
+  @node("DeveloperScreen", "mv_DeveloperScreen")
+  class DeveloperScreen extends mv.debug.DeveloperScreen
+
+    private views = []
+    private smartListTestScreen as mc.types.node
+
+
+    protected override function initialize()
+      super.initialize()
+      m.smartListTestScreen = m.createSGNode("SmartListTestScreen")
+      m.showScreen(m.smartListTestScreen)
+    end function
+
+    protected override function getMenuPageBuilderFunctions() as mc.types.array
+      return [
+        m.getDefaultPage
+        m.getPage2
+      ]
+    end function
+
+    override function onExecuteSelection(selection as mc.types.node) as boolean
+      return m.smartListTestScreen@.onExecuteSelection(selection)
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Pages
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    protected function getPage2()
+      return [
+        ["Launch SmartList r&d", function(): m.showScreen(m.createSGNode("SmartListTestScreen")): end function]
+      ]
+    end function
+
+  end class
+end namespace

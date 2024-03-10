@@ -1,0 +1,36 @@
+import "pkg:/source/view/BaseScreen.bs"
+
+namespace sl.screens
+
+  class BaseScreen extends mv.BaseScreen
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Public Fields
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    'used to track how we treat the items
+    depth = 0
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Private Fields
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    @inject("itemCache")
+    private itemCache as mc.types.node
+
+    function new(name as string)
+      super(name)
+    end function
+
+    protected function loadContent(content as mc.types.node, taskName as string, callback as function)
+      id = asString(content.id)
+      item = m.itemCache@.get(id)
+      if item = invalid
+        m.log.info("this item is not loaded. Loading now")
+        m.createTask(taskName, { content: content }, callback)
+      else
+        m.log.info("item", id, "was already cached")
+        m._apply(callback, [{ isOk: true, data: item }])
+      end if
+    end function
+  end class
+end namespace

@@ -1,0 +1,89 @@
+import "pkg:/source/view/Animation.bs"
+import "pkg:/source/core/Tasks.bs"
+import "pkg:/source/core/Types-Polyfill.bs"
+
+function Init() as void
+  m.background = m.top.findNode("background")
+  m.oldBackground = m.top.findNode("oldBackground")
+  ' m.shade = m.top.findNode("shade")
+  m.fadeoutAnimation = m.top.findNode("fadeoutAnimation")
+  m.fadeInAnimation = m.top.findNode("fadeInAnimation")
+  m.crossFadeAnim = m.top.findNode("crossFadeAnim")
+  m.backgroundColor = m.top.findNode("backgroundColor")
+
+  m.background.observeField("bitmapWidth", "if_onBackgroundLoaded")
+  m.top.observeField("width", "if_onSizeChange")
+  m.top.observeField("height", "if_onSizeChange")
+  m.top.observeField("scaleMode", "if_onSizeChange")
+  m.top.observeField("uri", "if_onUriChange")
+  m.currentAnim = invalid
+  m.failCount = 0
+
+end function
+
+' If Size changed, change parameters to children's
+function _initialize(args = invalid as mc.types.array) as void
+  m.top.isInitialized = true
+  size = m.top.size
+  w = size[0]
+  h = size[1]
+  m.background.width = w
+  m.oldBackground.width = w
+  ' m.shade.width = w
+  m.backgroundColor.width = w
+  m.oldBackground.loadWidth = w
+  m.background.loadWidth = w
+
+  m.oldBackground.height = h
+  m.background.height = h
+  ' m.shade.height = h
+  m.backgroundColor.height = h
+  m.oldBackground.loadHeight = h
+  m.background.loadHeight = h
+
+end function
+
+function if_onBackgroundLoaded() as void
+  if m.isAnimated
+    m.crossFadeAnim.control = "start"
+  else
+    m.background.opacity = 1
+    m.oldBackground.opacity = 0
+  end if
+end function
+
+function if_onUriChange()
+  changeImage(m.top.uri, m.top.isAnimated)
+end function
+
+function changeImage(uri as string, isAnimated = invalid as boolean)
+  oldUrl = m.currentUri
+  if uri <> invalid and uri <> ""
+    m.currentUri = uri
+  else
+    m.currentUri = ""
+  end if
+  if isAnimated = invalid
+    m.isAnimated = m.top.isAnimated
+  else
+    m.isAnimated = isAnimated = true
+  end if
+  ' oldScale = m.background
+  m.background.uri = m.currentUri
+
+  if oldUrl <> ""
+    ' m.oldBackground.scale = oldScale
+    m.oldBackground.uri = oldUrl
+
+    if m.isAnimated
+      m.oldBackground.opacity = 1
+      m.background.opacity = 0
+    else
+      m.background.opacity = 1
+      m.oldBackground.opacity = 0
+    end if
+  end if
+
+end function
+
+

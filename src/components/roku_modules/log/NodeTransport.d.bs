@@ -1,0 +1,16 @@
+' /**
+'  * @module LogNodeTransport
+'  * @description implementation of mLog node transport used for sending logs to RALE inspectable nodes
+'  */
+function Init() as void
+end function
+namespace log
+function clearLog() as void
+end function
+end namespace
+namespace log
+function updateLogOutput() as void
+end function
+end namespace
+function logItem(name, levelNum, text)
+end function

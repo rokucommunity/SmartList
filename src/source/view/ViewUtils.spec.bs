@@ -1,0 +1,1186 @@
+import "pkg:/source/tests/ViewBaseTestSuite.spec.bs"
+import "pkg:/source/view/ViewUtils.bs"
+import "pkg:/source/view/BaseView.bs"
+
+namespace tests
+
+  class TestViewTarget
+    private v1 as mc.types.node
+    private v2 as mc.types.node
+    private v3 as mc.types.node
+    private v4 as mc.types.node
+    createViewsFromStyleJson = mv.createViewsFromStyleJson
+    updateViewsWithStyleJson = mv.updateViewsWithStyleJson
+    getCurrentValuesWithStyleJson = mv.getCurrentValuesWithStyleJson
+    applyDataMap = mv.applyDataMap
+  end class
+
+  @nocatch
+  @suite("ViewUtils tests")
+  class ViewUtilsTests extends mv.tests.BaseTestSuite
+
+    protected override function beforeEach()
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    '++ Helpers
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    private function executeCreateViews(json, node, isSetOnM = true)
+      'bs:disable-next-line
+      target = new TestviewTarget()
+      target.log = m.log
+
+      'bs:disable-next-line
+      target.createViewsFromStyleJson(json, node, isSetOnM)
+      return target
+    end function
+
+    private function assertNode(targetM, node, subType, id, isSetOnM = true, height = invalid as float)
+      idName = `v${id}`
+      if height = invalid
+        height = id * 1.0
+      end if
+      m.assertSubType(node, subType, `${idName} was wrong type "${node.subType()}"- expected ${subType}`)
+      m.assertEqual(node.id, idName, `node had wrong id. got ${node.id} - expected ${idName}`)
+      m.assertEqual(node.height * 1.0, height, `${idName} had wrong height. got ${node.height} - expected ${id}`)
+      if isSetOnM
+        m.assertEqual(targetM[idName], node, `${idName} was not assigned on m`)
+      else
+        m.assertInvalid(targetM[idName], `${idName} was not meant to be assigned on m; but it was`)
+      end if
+    end function
+
+    private function createView(node) as object
+
+      json = [
+        {
+          "_type": "Rectangle"
+          "id": "v1"
+          "height": 1
+          "_children": [
+            {
+              "_type": "Label"
+              "id": "v2"
+              "height": 2
+            },
+            {
+              "_type": "Rectangle"
+              "id": "v3"
+              "height": 3
+              "_children": [
+                {
+                  "_type": "Poster"
+                  "id": "v4"
+                  "height": 4
+                },
+                {
+                  "_type": "Rectangle"
+                  "id": "v5"
+                  "height": 5
+                }
+              ]
+
+            }
+          ]
+        }
+      ]
+
+      return m.executeCreateviews(json, node)
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    @describe("updateViewsWithStyleJson")
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    @it("does not crash with illegal values")
+    @params(invalid, invalid)
+    @params({}, invalid)
+    @params("other", invalid)
+    @params(invalid, "#RBSNode")
+    @params({}, "#RBSNode")
+    @params("other", "#RBSNode")
+    function _(json, node)
+      target = m.createView(node)
+      target.updateViewsWithStyleJson(json)
+      m.assertTrue(true)
+    end function
+
+    @it("does not process any items without ids")
+    function _()
+      node = mc.createSGNode("Label", invalid, "view")
+
+      json = [
+        {
+          "height": 100
+        },
+        {
+          "height": 200
+        },
+        {
+          "height": 300
+        }
+      ]
+      target = m.createView(node)
+      target.updateViewsWithStyleJson(json)
+
+      m.assertNodeCount(node, 1)
+      m.assertNode(target, node.getChild(0), "Rectangle", 1)
+
+
+      child = node.getChild(0)
+      m.assertNodeCount(child, 2)
+      m.assertNode(target, child.getChild(0), "Label", 2)
+      m.assertNode(target, child.getChild(1), "Rectangle", 3)
+
+      grandChild = child.getChild(0)
+      m.assertNodeCount(grandChild, 0)
+
+      grandChild2 = child.getChild(1)
+      m.assertNodeCount(grandChild2, 2)
+      m.assertNode(target, grandChild2.getChild(0), "Poster", 4)
+      m.assertNode(target, grandChild2.getChild(1), "Rectangle", 5)
+    end function
+
+    @it("updates an array of nodes")
+    function _()
+      node = mc.createSGNode("Label", invalid, "view")
+
+      json = [
+        {
+          "_type": "Rectangle"
+          "id": "v1"
+          "height": 100
+        }
+        {
+          "_type": "Label"
+          "id": "v2"
+          "height": 200
+        }
+        {
+          "_type": "Rectangle"
+          "id": "v3"
+          "height": 300
+        }
+      ]
+
+      target = m.createView(node)
+      target.updateViewsWithStyleJson(json)
+      m.assertNode(target, target.v1, "Rectangle", 1, true, 100.0)
+      m.assertNode(target, target.v2, "Label", 2, true, 200.0)
+      m.assertNode(target, target.v3, "Rectangle", 3, true, 300.0)
+    end function
+
+    @it("legacy format: updates an aa of nodes, with ids; no nested ids")
+    function _()
+      node = mc.createSGNode("Label", invalid, "view")
+
+      json = {
+        "v1": {
+          "_type": "Rectangle"
+          "height": 100
+        }
+        "v2": {
+          "_type": "Label"
+          "height": 200
+        }
+        "v3": {
+          "_type": "Rectangle"
+          "height": 300
+        }
+      }
+
+      target = m.createView(node)
+      target.updateViewsWithStyleJson(json)
+      m.assertNode(target, target.v1, "Rectangle", 1, true, 100.0)
+      m.assertNode(target, target.v2, "Label", 2, true, 200.0)
+      m.assertNode(target, target.v3, "Rectangle", 3, true, 300.0)
+    end function
+
+    @it("legacy format: updates an aa of nodes, with ids; nested ids")
+    function _()
+      node = mc.createSGNode("Label", invalid, "view")
+
+      json = {
+        "v1": {
+          "_type": "Rectangle"
+          "id": "v1"
+          "height": 100
+        }
+        "v2": {
+          "_type": "Label"
+          "id": "v2"
+          "height": 200
+        }
+        "v3": {
+          "_type": "Rectangle"
+          "id": "v3"
+          "height": 300
+        }
+      }
+
+      target = m.createView(node)
+      target.updateViewsWithStyleJson(json)
+      m.assertNode(target, target.v1, "Rectangle", 1, true, 100.0)
+      m.assertNode(target, target.v2, "Label", 2, true, 200.0)
+      m.assertNode(target, target.v3, "Rectangle", 3, true, 300.0)
+    end function
+
+    @it("complex example")
+    function _()
+      node = mc.createSGNode("Label", invalid, "view")
+
+      json = [
+        {
+          "_type": "Rectangle"
+          "id": "v1"
+          "height": 100
+          "_children": [
+            {
+              "_type": "Label"
+              "id": "v2"
+              "height": 200
+            },
+            {
+              "_type": "Rectangle"
+              "id": "v3"
+              "height": 300
+              "_children": [
+                {
+                  "_type": "Poster"
+                  "id": "v4"
+                  "height": 400
+                },
+                {
+                  "_type": "Rectangle"
+                  "id": "v5"
+                  "height": 500
+                }
+              ]
+
+            }
+          ]
+        }
+      ]
+
+      target = m.createView(node)
+      target.updateViewsWithStyleJson(json)
+      m.assertNode(target, target.v1, "Rectangle", 1, true, 100.0)
+      m.assertNode(target, target.v2, "Label", 2, true, 200.0)
+      m.assertNode(target, target.v3, "Rectangle", 3, true, 300.0)
+      m.assertNode(target, target.v4, "Poster", 4, true, 400.0)
+      m.assertNode(target, target.v5, "Rectangle", 5, true, 500.0)
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    @describe("createViewsFromStyleJson")
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    @it("does not crash with illegal values")
+    @params(invalid, invalid)
+    @params({}, invalid)
+    @params("other", invalid)
+    @params(invalid, "#RBSNode")
+    @params({}, "#RBSNode")
+    @params("other", "#RBSNode")
+    function _(json, node)
+      m.executeCreateviews(json, node)
+      m.assertTrue(true)
+    end function
+
+    @it("does not process any items without types")
+    function _()
+      node = mc.createSGNode("Label", invalid, "view")
+
+      json = [
+        {
+          "id": "v1"
+          "height": 1
+        },
+        {
+          "id": "v2"
+          "height": 2
+        },
+        {
+          "type": "Rectangle"
+          "id": "v3"
+          "height": 3
+        }
+      ]
+      m.executeCreateviews(json, node)
+      m.assertNodeCount(node, 0)
+    end function
+
+    @it("creates top level views, in correct order, and assigns m fields")
+    function _()
+      node = mc.createSGNode("Label", invalid, "view")
+
+      json = [
+        {
+          "_type": "Rectangle"
+          "id": "v1"
+          "height": 1
+        },
+        {
+          "_type": "Label"
+          "id": "v2"
+          "height": 2
+        },
+        {
+          "_type": "Rectangle"
+          "id": "v3"
+          "height": 3
+        }
+      ]
+
+      target = m.executeCreateviews(json, node)
+      m.assertNodeCount(node, 3)
+
+      m.assertNode(target, node.getChild(0), "Rectangle", 1)
+      m.assertNode(target, node.getChild(1), "Label", 2)
+      m.assertNode(target, node.getChild(2), "Rectangle", 3)
+    end function
+
+    @it("does not assign views on m if disabed")
+    function _()
+      node = mc.createSGNode("Label", invalid, "view")
+
+      json = [
+        {
+          "_type": "Rectangle"
+          "id": "v1"
+          "height": 1
+        },
+        {
+          "_type": "Label"
+          "id": "v2"
+          "height": 2
+        },
+        {
+          "_type": "Rectangle"
+          "id": "v3"
+          "height": 3
+        }
+      ]
+
+      target = m.executeCreateviews(json, node, false)
+      m.assertNodeCount(node, 3)
+
+      m.assertNode(target, node.getChild(0), "Rectangle", 1, false)
+      m.assertNode(target, node.getChild(1), "Label", 2, false)
+      m.assertNode(target, node.getChild(2), "Rectangle", 3, false)
+    end function
+
+    @it("creates children")
+    function _()
+      node = mc.createSGNode("Label", invalid, "view")
+
+      json = [
+        {
+          "_type": "Rectangle"
+          "id": "v1"
+          "height": 1
+          "_children": [
+            {
+              "_type": "Label"
+              "id": "v2"
+              "height": 2
+            },
+            {
+              "_type": "Rectangle"
+              "id": "v3"
+              "height": 3
+            }
+          ]
+        }
+      ]
+
+      target = m.executeCreateviews(json, node)
+      m.assertNodeCount(node, 1)
+      m.assertNode(target, node.getChild(0), "Rectangle", 1)
+
+
+      child = node.getChild(0)
+      m.assertNodeCount(child, 2)
+      m.assertNode(target, child.getChild(0), "Label", 2)
+      m.assertNode(target, child.getChild(1), "Rectangle", 3)
+    end function
+
+    @it("creates nested children")
+    function _()
+      node = mc.createSGNode("Label", invalid, "view")
+
+      json = [
+        {
+          "_type": "Rectangle"
+          "id": "v1"
+          "height": 1
+          "_children": [
+            {
+              "_type": "Label"
+              "id": "v2"
+              "height": 2
+            },
+            {
+              "_type": "Rectangle"
+              "id": "v3"
+              "height": 3
+              "_children": [
+                {
+                  "_type": "Poster"
+                  "id": "v4"
+                  "height": 4
+                },
+                {
+                  "_type": "Rectangle"
+                  "id": "v5"
+                  "height": 5
+                }
+              ]
+
+            }
+          ]
+        }
+      ]
+
+      target = m.executeCreateviews(json, node)
+      m.assertNodeCount(node, 1)
+      m.assertNode(target, node.getChild(0), "Rectangle", 1)
+
+
+      child = node.getChild(0)
+      m.assertNodeCount(child, 2)
+      m.assertNode(target, child.getChild(0), "Label", 2)
+      m.assertNode(target, child.getChild(1), "Rectangle", 3)
+
+      grandChild = child.getChild(0)
+      m.assertNodeCount(grandChild, 0)
+
+      grandChild2 = child.getChild(1)
+      m.assertNodeCount(grandChild2, 2)
+      m.assertNode(target, grandChild2.getChild(0), "Poster", 4)
+      m.assertNode(target, grandChild2.getChild(1), "Rectangle", 5)
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    @describe("getCurrentValuesWithStyleJson")
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    private target
+    @beforeEach
+    function getcurrentValuesWithStyleJson_beforeEach()
+      node = mc.createSGNode("Label", invalid, "view")
+
+      rootJson = [
+        {
+          "_type": "Rectangle"
+          "id": "v1"
+          "height": 1
+          "width": 1
+          "_children": [
+            {
+              "_type": "Label"
+              "id": "v4"
+              "height": 4
+              "width": 4
+            },
+            {
+              "_type": "Rectangle"
+              "id": "v5"
+              "height": 5
+              "width": 5
+            }
+          ]
+        },
+        {
+          "_type": "Label"
+          "id": "v2"
+          "height": 2
+          "width": 2
+        },
+        {
+          "_type": "Rectangle"
+          "id": "v3"
+          "height": 3
+          "width": 3
+        }
+      ]
+
+      m.target = m.executeCreateviews(rootJson, node)
+    end function
+
+    @it("returns empty when no ids match")
+    @params(invalid)
+    @params([])
+    @params({})
+    @params([{}])
+    @params([{ "no": "id" }])
+    @params({ "id": "notThere", "height": 100 })
+    function _(json)
+      'bs:disable-next-line
+      nodes = m.target.getCurrentValuesWithStyleJson(json)
+      m.assertEmpty(nodes)
+    end function
+
+    @it("gets one node when set")
+    function _()
+      json = [
+        {
+          "id": "v1"
+          "height": 100
+        }
+      ]
+      'bs:disable-next-line
+      nodes = m.target.getCurrentValuesWithStyleJson(json)
+      m.assertArrayCount(nodes, 1)
+      m.assertArrayCount(nodes.v1, 2)
+      m.assertEqual(mc.getPath(nodes.v1, "height"), 1.0)
+      m.assertEqual(nodes.v1.id, "v1")
+    end function
+
+    @it("gets multiple fields")
+    function _()
+      json = [
+        {
+          "id": "v1"
+          "height": 100
+          "width": 150
+        }
+      ]
+      'bs:disable-next-line
+      nodes = m.target.getCurrentValuesWithStyleJson(json)
+      m.assertArrayCount(nodes, 1)
+      m.assertArrayCount(nodes.v1, 3)
+      m.assertEqual(nodes.v1.id, "v1")
+      m.assertEqual(nodes.v1.height, 1.0)
+      m.assertEqual(nodes.v1.width, 1.0)
+    end function
+
+    @it("gets multiple nodes")
+    function _()
+      json = [
+        {
+          "id": "v1"
+          "height": 100
+        }
+        {
+          "id": "v3"
+          "height": 300
+        }
+      ]
+      'bs:disable-next-line
+      nodes = m.target.getCurrentValuesWithStyleJson(json)
+      m.assertArrayCount(nodes, 2)
+      m.assertArrayCount(nodes.v1, 2)
+      m.assertEqual(mc.getPath(nodes.v1, "height"), 1.0)
+      m.assertEqual(nodes.v1.id, "v1")
+      m.assertArrayCount(nodes.v3, 2)
+      m.assertEqual(mc.getPath(nodes.v3, "height"), 3.0)
+      m.assertEqual(nodes.v3.id, "v3")
+    end function
+
+    @it("gets nested nodes")
+    function _()
+      json = [
+        {
+          "id": "v1"
+          "height": 100
+          "_children": [
+            {
+              "id": "v3"
+              "height": 300
+            }
+          ]
+        }
+      ]
+      'bs:disable-next-line
+      nodes = m.target.getCurrentValuesWithStyleJson(json)
+      m.assertArrayCount(nodes, 2)
+      m.assertArrayCount(nodes.v1, 2)
+      m.assertEqual(mc.getPath(nodes.v1, "height"), 1.0)
+      m.assertEqual(nodes.v1.id, "v1")
+      m.assertArrayCount(nodes.v3, 2)
+      m.assertEqual(mc.getPath(nodes.v3, "height"), 3.0)
+      m.assertEqual(nodes.v3.id, "v3")
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    @describe("getMapFromStyleJson")
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    @it("creates nested children")
+    function _()
+      v4 = {
+        "_type": "Poster"
+        "id": "v4"
+        "height": 4
+      }
+      v5 = {
+        "_type": "Rectangle"
+        "id": "v5"
+        "height": 5
+        "width": 5
+      }
+      v2 = {
+        "_type": "Label"
+        "id": "v2"
+        "height": 2
+      }
+      v3 = {
+        "_type": "Rectangle"
+        "id": "v3"
+        "width": 3
+        "height": 3
+        "_children": [
+          v4
+          v5
+        ]
+      }
+      json = [
+        {
+          "_type": "Rectangle"
+          "id": "v1"
+          "height": 1
+          "_children": [
+            v2
+            v3
+          ]
+        }
+      ]
+
+      f = mv.getMapFromStyleJson(json)
+      m.assertArrayCount(f, 5)
+      m.assertEqual(f.v1.id, "v1")
+      m.assertEqual(f.v1.height, 1)
+      m.assertEqual(f.v2.id, "v2")
+      m.assertEqual(f.v2.height, 2)
+      m.assertEqual(f.v3.id, "v3")
+      m.assertEqual(f.v3.height, 3)
+      m.assertEqual(f.v3.width, 3)
+      m.assertEqual(f.v4.id, "v4")
+      m.assertEqual(f.v4.height, 4)
+      m.assertEqual(f.v5.id, "v5")
+      m.assertEqual(f.v5.height, 5)
+      m.assertEqual(f.v5.width, 5)
+
+
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    @describe("applyDataMap")
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    @it("applies static values to fields")
+    function _()
+      node = mc.createSGNode("Label", invalid, "view")
+
+      json = [
+        {
+          "_type": "mv_Label"
+          "id": "v1"
+          "height": 1
+          "_dataMap": {
+            "text": {
+              "value": "title"
+            }
+          }
+        }
+      ]
+
+      target = m.executeCreateviews(json, node)
+      m.assertNodeCount(node, 1)
+      label = node.getChild(0)
+      m.assertNode(target, label, "mv_Label", 1)
+      mv.applyDataMap(label)
+      m.assertEqual(label.text, "title")
+    end function
+
+    @it("does nothing with no values")
+    function _()
+      node = mc.createSGNode("Label", invalid, "view")
+
+      json = [
+        {
+          "_type": "mv_Label"
+          "id": "v1"
+          "height": 1
+          "_dataMap": {
+            "text": {
+            }
+          }
+        }
+      ]
+
+      target = m.executeCreateviews(json, node)
+      m.assertNodeCount(node, 1)
+      label = node.getChild(0)
+      m.assertNode(target, label, "mv_Label", 1)
+      mv.applyDataMap(label)
+      m.assertEqual(label.text, "")
+    end function
+
+    @it("applies multiple static values")
+    function _()
+      node = mc.createSGNode("Label", invalid, "view")
+
+      json = [
+        {
+          "_type": "mv_Label"
+          "id": "v1"
+          "height": 1
+          "_dataMap": {
+            "text": {
+              value: "t"
+            }
+            "height": {
+              value: 400
+            }
+          }
+        }
+      ]
+
+      target = m.executeCreateviews(json, node)
+      m.assertNodeCount(node, 1)
+      label = node.getChild(0)
+      m.assertNode(target, label, "mv_Label", 1)
+      mv.applyDataMap(label)
+      m.assertEqual(label.text, "t")
+      m.assertEqual(label.height, 400.0)
+    end function
+
+    @it("applies values from a data source")
+    function _()
+      node = mc.createSGNode("Label", invalid, "view")
+
+      json = [
+        {
+          "_type": "mv_Label"
+          "id": "v1"
+          "height": 1
+          "_dataMap": {
+            "text": {
+              field: "json.title"
+            }
+            "height": {
+              field: "json.height"
+            }
+          }
+        }
+      ]
+
+      item = {
+        json: {
+          title: "t"
+          height: 400.0
+        }
+      }
+      target = m.executeCreateviews(json, node)
+      m.assertNodeCount(node, 1)
+      label = node.getChild(0)
+      m.assertNode(target, label, "mv_Label", 1)
+
+      mv.applyDataMap(label, item)
+
+      m.assertEqual(label.text, "t")
+      m.assertEqual(label.height, 400.0)
+    end function
+
+    @it("allows for string short hand")
+    function _()
+      node = mc.createSGNode("Label", invalid, "view")
+
+      json = [
+        {
+          "_type": "mv_Label"
+          "id": "v1"
+          "height": 1
+          "_dataMap": {
+            "text": "json.title"
+            "height": "json.height"
+          }
+        }
+      ]
+
+      item = {
+        json: {
+          title: "t"
+          height: 400.0
+        }
+      }
+      target = m.executeCreateviews(json, node)
+      m.assertNodeCount(node, 1)
+      label = node.getChild(0)
+      m.assertNode(target, label, "mv_Label", 1)
+
+      mv.applyDataMap(label, item)
+
+      m.assertEqual(label.text, "t")
+      m.assertEqual(label.height, 400.0)
+    end function
+
+    @it("does not crash with invalid datasource")
+    function _()
+      node = mc.createSGNode("Label", invalid, "view")
+
+      json = [
+        {
+          "_type": "mv_Label"
+          "id": "v1"
+          "height": 1
+          "_dataMap": {
+            "text": {
+              field: "json.title"
+            }
+            "height": {
+              field: "json.height"
+            }
+          }
+        }
+      ]
+
+      target = m.executeCreateviews(json, node)
+      m.assertNodeCount(node, 1)
+      label = node.getChild(0)
+      m.assertNode(target, label, "mv_Label", 1)
+
+      mv.applyDataMap(label)
+
+      m.assertEqual(label.text, "")
+      m.assertEqual(label.height, 0.0)
+    end function
+
+    @it("does not crash with invalid template types")
+    @params(invalid)
+    @params(123)
+    @params([])
+    @params({})
+    @params(true)
+    function _(template)
+      node = mc.createSGNode("Label", invalid, "view")
+
+      json = [
+        {
+          "_type": "mv_Label"
+          "id": "v1"
+          "size": [1, 1]
+          "_dataMap": {
+            "text": {
+              field: "json.text"
+              template: template
+            }
+          }
+        }
+      ]
+      item = {
+        json: {
+          text: "text"
+        }
+      }
+
+      target = m.executeCreateviews(json, node)
+      m.assertNodeCount(node, 1)
+      label = node.getChild(0)
+      m.assertNode(target, label, "mv_Label", 1)
+
+      mv.applyDataMap(label, item)
+
+      m.assertEqual(label.text, "text")
+    end function
+
+    @it("doesn't replace data map value with template string if value is empty")
+    function _()
+      node = mc.createSGNode("Label", invalid, "view")
+
+      json = [
+        {
+          "_type": "mv_Label"
+          "id": "v1"
+          "size": [1, 1]
+          "_dataMap": {
+            "text": {
+              field: "json.text"
+              template: "{{value}}_replaced"
+            }
+          }
+        }
+      ]
+      item = {
+        json: {
+          text: ""
+        }
+      }
+
+      target = m.executeCreateviews(json, node)
+      m.assertNodeCount(node, 1)
+      label = node.getChild(0)
+      m.assertNode(target, label, "mv_Label", 1)
+
+      mv.applyDataMap(label, item)
+
+      m.assertEqual(label.text, "")
+    end function
+
+    @it("replaces data map value with template string")
+    function _()
+      node = mc.createSGNode("Label", invalid, "view")
+
+      json = [
+        {
+          "_type": "mv_Label"
+          "id": "v1"
+          "size": [1, 1]
+          "_dataMap": {
+            "text": {
+              field: "json.text"
+              template: "{{value}}_replaced"
+            }
+          }
+        }
+      ]
+      item = {
+        json: {
+          text: "text"
+        }
+      }
+
+      target = m.executeCreateviews(json, node)
+      m.assertNodeCount(node, 1)
+      label = node.getChild(0)
+      m.assertNode(target, label, "mv_Label", 1)
+
+      mv.applyDataMap(label, item)
+
+      m.assertEqual(label.text, "text_replaced")
+    end function
+
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    @describe("createFragment")
+    '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    @it("creates a view fragment, with no bindings")
+    function _()
+      json = {
+        "_type": "Rectangle"
+        "id": "v1"
+        "height": 1.0
+      }
+      view = mv.createFragment(json)
+
+      m.assertSubType(view, "Rectangle")
+      m.assertEqual(view.id, "v1")
+      m.assertEqual(view.height, 1.0)
+    end function
+
+    @it("creates a view fragment, with children, with no bindings")
+    function _()
+      json = {
+        "_type": "Rectangle"
+        "id": "v1"
+        "height": 1.0
+        "_children": [
+          {
+            "_type": "mv_Label"
+            "id": "v2"
+            "text": "a"
+          }
+          {
+            "_type": "mv_Label"
+            "id": "v3"
+            "text": "b"
+            "_children": [
+              {
+                "_type": "mv_Label"
+                "id": "v4"
+                "text": "c"
+              }
+            ]
+          }
+        ]
+      }
+      view = mv.createFragment(json)
+
+      m.assertSubType(view, "Rectangle")
+      m.assertEqual(view.id, "v1")
+      m.assertEqual(view.height, 1.0)
+
+      child1 = view.getChild(0)
+
+      m.assertSubType(child1, "mv_Label")
+      m.assertEqual(child1.id, "v2")
+      m.assertEqual(child1.text, "a")
+
+      child2 = view.getChild(1)
+
+      m.assertSubType(child2, "mv_Label")
+      m.assertEqual(child2.id, "v3")
+      m.assertEqual(child2.text, "b")
+
+      child2_1 = child2.getChild(0)
+
+      m.assertSubType(child2_1, "mv_Label")
+      m.assertEqual(child2_1.id, "v4")
+      m.assertEqual(child2_1.text, "c")
+    end function
+
+    @it("creates a view fragment, with children, with bindings")
+    function _()
+      json = {
+        "_type": "Rectangle"
+        "id": "v1"
+        "height": "${json.height}"
+        "_children": [
+          {
+            "_type": "mv_Label"
+            "id": "v2"
+            "text": "${json.item1.a}"
+          }
+          {
+            "_type": "mv_Label"
+            "id": "v3"
+            "text": "${json.item2.subItem.b}"
+            "_children": [
+              {
+                "_type": "mv_Label"
+                "id": "v4"
+                "text": "${json.others[1]}"
+              }
+            ]
+          }
+        ]
+      }
+
+      data = {
+        json: {
+          "height": 200.0
+          item1: {
+            "a": "first"
+          }
+          item2: {
+            subItem: {
+              "b": "second"
+            }
+          }
+          others: [
+            "third", "fourth"
+          ]
+        }
+      }
+      view = mv.createFragment(json, invalid, data)
+
+      m.assertSubType(view, "Rectangle")
+      m.assertEqual(view.id, "v1")
+      m.assertEqual(view.height, 200.0)
+
+      child1 = view.getChild(0)
+
+      m.assertSubType(child1, "mv_Label")
+      m.assertEqual(child1.id, "v2")
+      m.assertEqual(child1.text, "first")
+
+      child2 = view.getChild(1)
+
+      m.assertSubType(child2, "mv_Label")
+      m.assertEqual(child2.id, "v3")
+      m.assertEqual(child2.text, "second")
+
+      child2_1 = child2.getChild(0)
+
+      m.assertSubType(child2_1, "mv_Label")
+      m.assertEqual(child2_1.id, "v4")
+      m.assertEqual(child2_1.text, "fourth")
+    end function
+
+    @it("creates a view fragment, with children, with bindings, and works multiple times")
+    function _()
+      json = {
+        "_type": "Rectangle"
+        "id": "v1"
+        "height": "${json.height}"
+        "_children": [
+          {
+            "_type": "mv_Label"
+            "id": "v2"
+            "text": "${json.item1.a}"
+          }
+          {
+            "_type": "mv_Label"
+            "id": "v3"
+            "text": "${json.item2.subItem.b}"
+            "_children": [
+              {
+                "_type": "mv_Label"
+                "id": "v4"
+                "text": "${json.others[1]}"
+              }
+            ]
+          }
+        ]
+      }
+
+      data = {
+        json: {
+          "height": 200.0
+          item1: {
+            "a": "first"
+          }
+          item2: {
+            subItem: {
+              "b": "second"
+            }
+          }
+          others: [
+            "third", "fourth"
+          ]
+        }
+      }
+      view = mv.createFragment(json, invalid, data)
+
+      m.assertSubType(view, "Rectangle")
+      m.assertEqual(view.id, "v1")
+      m.assertEqual(view.height, 200.0)
+
+      child1 = view.getChild(0)
+
+      m.assertSubType(child1, "mv_Label")
+      m.assertEqual(child1.id, "v2")
+      m.assertEqual(child1.text, "first")
+
+      child2 = view.getChild(1)
+
+      m.assertSubType(child2, "mv_Label")
+      m.assertEqual(child2.id, "v3")
+      m.assertEqual(child2.text, "second")
+
+      child2_1 = child2.getChild(0)
+
+      m.assertSubType(child2_1, "mv_Label")
+      m.assertEqual(child2_1.id, "v4")
+      m.assertEqual(child2_1.text, "fourth")
+
+      view = mv.createFragment(json, invalid, data)
+
+      m.assertSubType(view, "Rectangle")
+      m.assertEqual(view.id, "v1")
+      m.assertEqual(view.height, 200.0)
+
+      child1 = view.getChild(0)
+
+      m.assertSubType(child1, "mv_Label")
+      m.assertEqual(child1.id, "v2")
+      m.assertEqual(child1.text, "first")
+
+      child2 = view.getChild(1)
+
+      m.assertSubType(child2, "mv_Label")
+      m.assertEqual(child2.id, "v3")
+      m.assertEqual(child2.text, "second")
+
+      child2_1 = child2.getChild(0)
+
+      m.assertSubType(child2_1, "mv_Label")
+      m.assertEqual(child2_1.id, "v4")
+      m.assertEqual(child2_1.text, "fourth")
+    end function
+
+  end class
+end namespace

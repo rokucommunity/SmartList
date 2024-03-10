@@ -1,0 +1,49 @@
+import "pkg:/source/core/Utils.bs"
+import "pkg:/source/view/FontManager.bs"
+
+function init()
+  m.top.observeFieldScoped("fontKey", "onFontKeyChange")
+  m.top.observeFieldScoped("style", "onStyleChange")
+  m.top.observeFieldScoped("size", "onSizeChange")
+  m.top.observeFieldScoped("fontStyleKey", "onFontStyleKeyChange")
+  m.top.observeFieldScoped("isHighlighted", "onIsHighlightedChange")
+  onFontKeyChange()
+end function
+
+function onFontKeyChange()
+  if m.top.fontKey <> invalid and m.global.fontManager <> invalid
+    m.top.font = m.global.fontManager@.getFontWithKey(m.top.fontKey)
+  end if
+end function
+
+function onFontStyleKeyChange()
+  styleKey = m.top.fontStyleKey
+  if styleKey <> "" and m.global.fontManager <> invalid and m.global.styleManager <> invalid
+    fontKey = m.global.styleManager@.getStyleValue("~" + styleKey)
+    m.top.font = m.global.fontManager@.getFontWithKey(fontKey)
+    if m.top.normalColor <> ""
+      m.top.color = m.top.normalColor
+    end if
+  end if
+end function
+
+function onStyleChange()
+  m.top.setFields(m.top.style)
+end function
+
+function onSizeChange()
+  if m.top.size <> invalid and m.top.size.count() > 0
+    m.top.width = m.top.size[0]
+    m.top.height = m.top.size[1]
+  end if
+end function
+
+function onIsHighlightedChange(event as dynamic)
+  if m.top.highlightedColor <> invalid and m.top.highlightedColor <> ""
+    if event.getData() = true
+      m.top.color = m.top.highlightedColor
+    else
+      m.top.color = m.top.normalColor
+    end if
+  end if
+end function

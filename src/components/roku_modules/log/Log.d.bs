@@ -1,0 +1,18 @@
+' /**
+'  * @module mLog
+'  * @description implementation of mLog node
+'  */
+function Init() as void
+end function
+namespace log
+function onTransportsChange(event)
+end function
+end namespace
+namespace log
+function log_onDateTimerFire()
+end function
+end namespace
+namespace log
+function log_onIncludeDate()
+end function
+end namespace

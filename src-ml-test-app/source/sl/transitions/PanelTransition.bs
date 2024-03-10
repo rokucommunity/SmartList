@@ -1,0 +1,48 @@
+import "pkg:/source/view/NodeClass.bs"
+import "pkg:/source/view/Animation.bs"
+import "pkg:/source/core/Utils.bs"
+import "pkg:/source/view/transitions/BaseTransition.bs"
+
+namespace sl.transitions
+  @node("sl_PanelTransition", "Group")
+  class PanelTransition extends mv.transitions.BaseTransition
+
+    public color as string
+
+    public size = [1920, 1080]
+
+    public duration = 2
+
+    private moveAnim as mv.animations.Move
+
+    function new()
+      super("sl_PanelTransition")
+    end function
+
+    protected override function begin()
+
+      ' m.moveAnim.onFraction(0.5, function(f as float)
+      if m.source <> invalid and not m.source.isSameNode(m.target)
+        m.source@._setShown(false)
+        m.owner.removeChild(m.source)
+      end if
+      if m.target <> invalid and not m.target.isSameNode(m.source)
+        m.owner.appendChild(m.target)
+        m.target.translation = [100, 300]
+        m.target@._setShown(m.owner.isShown)
+      end if
+      ' end function, m)
+
+      ' m.moveAnim.observeFraction(function(f as float)
+      '   m.top.progress = f
+      ' end function, m)
+
+      ' m.moveAnim.onFraction(1, function(f as float)
+      m.finish()
+      ' end function, m)
+
+      ' m.moveAnim.start()
+    end function
+
+  end class
+end namespace
